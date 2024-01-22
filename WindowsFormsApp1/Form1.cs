@@ -55,6 +55,7 @@ namespace WindowsFormsApp1
             };
             TextBox username = new TextBox() //Text box for user input
             {
+                Name = "UsernameBox",
                 Location = new Point(103, 10), //On same line as label but a bit later
             };
             Controls.Add(usernameLabel); //Add both to controls
@@ -86,9 +87,11 @@ namespace WindowsFormsApp1
             RevealPassword.Click += PasswordReveal; //Attach the PasswordReveal function
             Button SubmitButton = new Button() //Button for submitting login information
             {
+                Name = "SubmitLogin",
                 Text = "Submit", //Set the text of the button
                 Location = new Point(15,70) //Below the password label
             };
+            SubmitButton.Click += SubmitButtonClick;
             Controls.Add(SubmitButton); //Add to controls
             Button ExitButton = new Button() //Button for exiting GUI
             {
@@ -132,6 +135,7 @@ namespace WindowsFormsApp1
             };
             TextBox username = new TextBox() //Text box for user input
             {
+                Name = "UsernameBox",
                 Location = new Point(105, 10), //On same line as label but a bit later
             };
             Label emailLabel = new Label()
@@ -143,6 +147,7 @@ namespace WindowsFormsApp1
             };
             TextBox email = new TextBox()
             {
+                Name = "EmailBox",
                 Location = new Point(105,40)
             };
             Label firstNameLabel = new Label()
@@ -154,6 +159,7 @@ namespace WindowsFormsApp1
             };
             TextBox firstName = new TextBox()
             {
+                Name = "FirstNameBox",
                 Location = new Point(105, 70)
             };
             Label lastNameLabel = new Label()
@@ -165,6 +171,7 @@ namespace WindowsFormsApp1
             };
             TextBox lastName = new TextBox()
             {
+                Name = "LastNameBox",
                 Location = new Point(105, 100)
             };
             Label passwordLabel = new Label()
@@ -202,17 +209,70 @@ namespace WindowsFormsApp1
             RevealPassword.Click += PasswordReveal; //Attach the PasswordReveal function
             Button SubmitButton = new Button() //Button for submitting login information
             {
+                Name = "SubmitSignup",
                 Text = "Submit", //Set the text of the button
                 Location = new Point(15, 160) //Below the password label
             };
+            SubmitButton.Click += SubmitButtonClick; //Add event handler for when button is clicked
             Controls.Add(SubmitButton); //Add to controls
             Button ExitButton = new Button() //Button for exiting GUI
             {
                 Text = "Exit", //Set text of button
                 Location = new Point(113, 160) //Same Y as submit but 98 pixels away
             };
-            ExitButton.Click += ExitGUI;
+            ExitButton.Click += ExitGUI; //Add event handler for when button is clicked
             Controls.Add(ExitButton);
+        }
+        private void SubmitButtonClick(object sender, EventArgs e)
+        {
+            string Type = ""; //Set type to empty incase the code doesn't execute as intended.
+            if (sender is Button clickedButton) //Cast to button
+            {
+                string ButtonName = clickedButton.Name; //Get name
+                if (ButtonName == "SubmitSignup") //If sign up page
+                {
+                    Type = "Signup"; //Set type
+                }
+                else if (ButtonName == "SubmitLogin") //If login page
+                {
+                    Type = "Login"; //Set type
+                } else
+                {
+                    //This should not occur but error handling for if it does.
+                    MessageBox.Show("Somehow managed to get a value of " + ButtonName + " as the button name??");
+                }
+            } 
+            if (Type == "Signup") //If sender was the signup page button
+            {
+                string Email = ((TextBox)Controls["EmailBox"]).Text.Trim();//Find box using name and get text attribute
+                string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
+                string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
+                string Firstname = ((TextBox)Controls["FirstNameBox"]).Text.Trim();//Find box using name and get text attribute
+                string Lastname = ((TextBox)Controls["LastNameBox"]).Text.Trim();//Find box using name and get text attribute
+                if (Email == "" || Username == "" || Password == "" || Firstname == "" | Lastname == "")
+                {
+                    MessageBox.Show("Boxes cannot be empty.");
+                }
+                else
+                {
+                    Validation ValidClass = new Validation(Email, Username, Password);
+                    if (!ValidClass.Valid)
+                    {
+                        MessageBox.Show(ValidClass.Reason);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Information valid.");
+                        //Attempt to create account here
+                    }
+                }
+            } else if (Type == "Login") //If sender was the login page button
+            {
+                //Login code
+                MessageBox.Show("Logging in....");
+                string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
+                string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
+            }
         }
     }
 }

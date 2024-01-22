@@ -18,12 +18,12 @@ namespace WindowsFormsApp1
         }
         private void Validate(string email, string username, string password)
         {
-            string EmailValid = EmailValidation(email); //Check if email valid
+            bool EmailValid = EmailValidation(email); //Check if email valid
             string PasswordValid = PasswordValidation(password);//Check if password valid
-            if (EmailValid!="Email accepted") //If email not accepted, use the returned response as the reason
+            if (!EmailValid) //If email not accepted, use the returned response as the reason
             {
                 valid = false; //Set valid to false
-                reason = EmailValid; //Set the reason as the returned response
+                reason = "Email invalid"; //Set the reason as the returned response
             }
             else if (username.Length < 6 || username.Length > 32) //Check username length
             {
@@ -84,9 +84,11 @@ namespace WindowsFormsApp1
                 return "Password accepted"; //All else succeeds, no issues. Return accepted
             }
         }
-        private string EmailValidation(string email)
+        private bool EmailValidation(string email)
         {
-            return "";
+            string pattern = @"^[a-zA-Z0-9._\-]*[a-zA-Z0-9]{1}@[a-zA-Z]+(\.com|\.co\.uk|\.ac\.uk)"; //Create pattern
+            Regex regex = new Regex(pattern); //New instance of class
+            return regex.IsMatch(email); //Check for match
         }
         public bool Valid //Getter and setter methods
         {
