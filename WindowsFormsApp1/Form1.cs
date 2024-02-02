@@ -272,7 +272,12 @@ namespace WindowsFormsApp1
                 MessageBox.Show("Logging in....");
                 string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
                 string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
+                ShowChessGUI(Username,Password);
             }
+        }
+        private void ShowChessGUI (string username, string password)
+        {
+            Chess chessGUI = new Chess();  // instance of Chess
         }
     }
 }
