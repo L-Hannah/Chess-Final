@@ -12,6 +12,7 @@ namespace WindowsFormsApp1
 {
     public partial class Form1 : Form
     {
+        Chess2 ChessGUI;
         public Form1()
         {
             InitializeComponent();
@@ -272,12 +273,15 @@ namespace WindowsFormsApp1
                 MessageBox.Show("Logging in....");
                 string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
                 string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
-                ShowChessGUI(Username,Password);
+                ShowChessGUI(Username); //Authenticated so we can pass the username in
             }
         }
-        private void ShowChessGUI (string username, string password)
+        private void ShowChessGUI (string username)
         {
-            Chess chessGUI = new Chess();  // instance of Chess
+            ChessGUI = new Chess2(username);
+            ChessGUI.Show();
+            Controls.Clear();
+            Hide();
         }
     }
 }
