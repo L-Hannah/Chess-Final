@@ -112,7 +112,6 @@ namespace WindowsFormsApp1
                     Button TempButton = new Button() //Create temporary button
                     {
                         Text = "", //Ensure text is empty
-                        Image= Resources.WP, //Set image
                         Name = i.ToString() + j.ToString(), //Set name to coordinate string
                         Size = new Size(100, 100), //Set size
                         Visible = true, //Make button visible
@@ -120,10 +119,67 @@ namespace WindowsFormsApp1
                         FlatStyle= FlatStyle.Flat, //Style of button
                         BackColor= Color.Transparent //Set background to transparent
                     };
+                    SetButtonImage(TempButton, i.ToString() + j.ToString());
                     Controls.Add(TempButton); //Add button to form controls
                     TempButton.BringToFront(); //Bring button forward
                 }
             }
+        }
+        private void SetButtonImage(Button button, string coordstring)
+        {
+            string curpiece = dictionaries.GetPieceWithCoordString(coordstring);
+            switch (curpiece) //Switch statement to look at value of piece
+            {
+                case "BR":
+                    button.Image = Resources.BR;
+                    break;
+                case "BH":
+                    button.Image = Resources.BH;
+                    break;
+                case "BB":
+                    button.Image = Resources.BB;
+                    break;
+                case "BQ":
+                    button.Image = Resources.BQ;
+                    break;
+                case "BK":
+                    button.Image = Resources.BK;
+                    break;
+                case "BP":
+                    button.Image = Resources.BP;
+                    break;
+                case "WR":
+                    button.Image = Resources.WR;
+                    break;
+                case "WH":
+                    button.Image = Resources.WH;
+                    break;
+                case "WB":
+                    button.Image = Resources.WB;
+                    break;
+                case "WQ":
+                    button.Image = Resources.WQ;
+                    break;
+                case "WK":
+                    button.Image = Resources.WK;
+                    break;
+                case "WP":
+                    button.Image = Resources.WP;
+                    break;
+                case "WKIC":
+                    button.Image = Resources.WKIC;
+                    break;
+                case "BKIC":
+                    button.Image = Resources.BKIC;
+                    break;
+                case "":
+                    button.Image = Resources.blankimage;
+                    break;
+                default:
+                    // Set a default image or do nothing if the piece abbreviation is not recognized
+                    break;
+            }
+
         }
         private void Chess2_FormClosed(object sender, FormClosedEventArgs e)
         {
