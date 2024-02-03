@@ -23,7 +23,9 @@ namespace WindowsFormsApp1
 
         private void Chess2_Load(object sender, EventArgs e)
         {
-            dictionaries = new Dictionaries();
+            dictionaries = new Dictionaries(); //Initialize new dictionary
+            dictionaries.SetBoard(1, 2, "BK"); //board set
+            dictionaries.SetBoard(3, 4, "WH");
         }
 
         private void Chess2_FormClosed(object sender, FormClosedEventArgs e)

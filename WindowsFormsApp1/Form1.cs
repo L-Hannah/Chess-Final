@@ -270,7 +270,6 @@ namespace WindowsFormsApp1
             } else if (Type == "Login") //If sender was the login page button
             {
                 //Login code
-                MessageBox.Show("Logging in....");
                 string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
                 string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
                 ShowChessGUI(Username); //Authenticated so we can pass the username in

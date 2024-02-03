@@ -51,7 +51,50 @@ namespace WindowsFormsApp1
             string[] possiblevalues = new string[] { "BR", "BH", "BB", "BQ", "BK", "BP", "WR", "WH", "WB", "WQ", "WK", "WK", "WP", "","WKIC","BKIC" }; 
             //Possible abbreviations
             if (!possiblevalues.Contains(value)) return false; //Piece not possible
+            board[(x,y)]=value; //Set value
             return true;
+        }
+        public string GetPieceColour(string abbreviation)
+        {
+            if (abbreviation=="" )//If piece is empty
+            {
+                return "";
+            }
+            string colour = abbreviation.Substring(0, 1).ToUpper(); //Get first character
+            if (colour =="W") //Colour is white
+            {
+                return "white";
+            }
+            else //Must be black as empty string handled already.
+            {
+                return "black";
+            }
+        }
+        public string GetPieceWithCoordString(string coordstring)
+        {
+            int i = (int)char.GetNumericValue(coordstring[0]); //Get numeric value of first character and set as i
+            int j = (int)char.GetNumericValue(coordstring[1]); //Get numeric value of second character and set as i
+            return GetBoard(i, j); //Return piece abbrevation from the coordinate
+        }
+        public string GetBoard(int x,int y)
+        {
+            if (y < 0 || y > 7 || x < 0 || x > 7) //Test coords
+            {
+                throw new ArgumentOutOfRangeException("Parameter index is out of range.");
+            };
+            return board[(x, y)]; //if coords valid, return piece at these coords
+        }
+        public string FindIndex(string pieceabbrev)
+        {
+            for (int i=0; i < 8; i++) //Nested loop
+            {
+                for (int j=0; j < 8; j++)
+                {
+                    //If piece found, return coordinates as string.
+                    if (GetBoard(i,j)== pieceabbrev) { return i.ToString() + j.ToString(); }
+                }
+            }
+            return ""; //Not found, return empty value.
         }
     }
 }
