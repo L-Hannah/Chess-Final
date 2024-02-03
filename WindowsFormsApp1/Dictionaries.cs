@@ -8,26 +8,9 @@ namespace WindowsFormsApp1
 {
     internal class Dictionaries
     {
-        private Dictionary<string, string> piecenames; //Dictionary for each piecename to use for reference
         private Dictionary<(int,int), string> board; //Dictionary for board
         public Dictionaries()
         {
-            piecenames = new Dictionary<string, string>() //Create dictionary for abbreviations
-            {
-                { "BR", "blackrook" },
-                { "BH", "blackknight" },
-                { "BB", "blackbishop" },
-                { "BQ", "blackqueen" },
-                { "BK", "blackking" },
-                { "BP", "blackpawn" },
-                { "WR", "whiterook" },
-                { "WH", "whiteknight" },
-                { "WB", "whitebishop" },
-                { "WQ", "whitequeen" },
-                { "WK", "whiteking" },
-                { "WP", "whitepawn" },
-                { "", ""}
-            };
             board = new Dictionary<(int, int), string>(); //Create empty dictionary for board
             for (int i=0;i<8;i++) //Nested for loop
             {
