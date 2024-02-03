@@ -14,6 +14,7 @@ namespace WindowsFormsApp1
     public partial class Chess2 : Form
     {
         string Username;
+        Dictionaries dictionaries;
         public Chess2(string username)
         {
             Username = username;
@@ -22,6 +23,7 @@ namespace WindowsFormsApp1
 
         private void Chess2_Load(object sender, EventArgs e)
         {
+            dictionaries = new Dictionaries();
         }
 
         private void Chess2_FormClosed(object sender, FormClosedEventArgs e)
