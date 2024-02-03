@@ -20,11 +20,6 @@ namespace WindowsFormsApp1
                 }
             }
         }
-        public Dictionary<string, string> Piecenames
-        {
-            get { return piecenames; }
-            set { piecenames = value; }
-        }
         public bool SetBoard(int x, int y, string value)
         {
             if (y<0 || y>7||x<0||x>7)
