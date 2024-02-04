@@ -308,9 +308,41 @@ namespace WindowsFormsApp1
             {
                 int idiff = i - curi; //Get horizontal difference
                 int jdiff = j - curj; //Get vertical difference
-                if (pieceabbrev!="") //Not attempting to take a piece
+                if (pieceabbrev=="") //Not attempting to take a piece
                 {
                     if (idiff!=0) { return false; } //Can't move horizontally when not trying to take a piece.
+                    if (curcolour!=colour)
+                    {
+                        if (jdiff==1) //Has to move down
+                        {
+                            return true;
+                        }
+                        if (jdiff==2 && curj==1) //Trying starting move
+                        {
+                            if (dictionaries.GetBoard(curi,curj+1)==""&&dictionaries.GetBoard(curi,curj+2)=="")
+                            {
+                                return true; //Move is valid as no pieces in the way.
+                            }
+                        }
+                    } else
+                    {
+                        if (jdiff==-1) //Has to move up
+                        {
+                            return true;
+                        }
+                        if (jdiff == -2 && curj == 6) //Trying starting move
+                        {
+                            if (dictionaries.GetBoard(curi, curj-1) == "" && dictionaries.GetBoard(curi, curj-2) == "")
+                            {
+                                return true; //Move is valid as no pieces in the way.
+                            }
+                        }
+                    }
+                } 
+                else
+                {
+                    //Attempting to take a piece
+
                 }
             }
             return viable;
