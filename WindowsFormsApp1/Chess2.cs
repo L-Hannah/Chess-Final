@@ -9,17 +9,20 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Windows.Forms;
 using WindowsFormsApp1.Properties;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace WindowsFormsApp1
 {
     public partial class Chess2 : Form
     {
-        string Username;
+        string username;
         string colour;
+        string currentlyselected=""; //Holds the currently selected piece.
+        string turn = "white";
         Dictionaries dictionaries;
-        public Chess2(string username)
+        public Chess2(string uname)
         {
-            Username = username;
+            username = uname;
             InitializeComponent();
         }
 
@@ -32,7 +35,7 @@ namespace WindowsFormsApp1
         {
             Controls.Clear();
             dictionaries = new Dictionaries(); //Initialize new dictionary
-            Text = $"Chess Project - Signed in as {Username}"; //Change title of window
+            Text = $"Chess Project - Signed in as {username}"; //Change title of window
             Size = new Size(816, 838); //Set size
             MaximumSize = new Size(816, 838); //Don't allow resizing
             MinimumSize = new Size(816, 838); //Don't allow resizing
@@ -117,11 +120,112 @@ namespace WindowsFormsApp1
                         Visible = true, //Make button visible
                         Location = new Point(i*100,j*100), //Set position dynamically 
                         FlatStyle= FlatStyle.Flat, //Style of button
-                        BackColor= Color.Transparent //Set background to transparent
+                        BackColor= Color.Transparent, //Set background to transparent
                     };
+                    TempButton.FlatAppearance.MouseOverBackColor = Color.Transparent; //No colour when hovering
+                    TempButton.FlatAppearance.MouseDownBackColor = Color.Aqua; //Aqua when clicked
                     SetButtonImage(TempButton, i.ToString() + j.ToString());
+                    TempButton.Click += new EventHandler(SquareButton_Click); //Add event handler
                     Controls.Add(TempButton); //Add button to form controls
                     TempButton.BringToFront(); //Bring button forward
+                }
+            }
+        }
+        private void SquareButton_Click(object sender, EventArgs e)
+        {
+            Button btn = (Button)sender; //Turn sender into button object
+            string coordstring = btn.Name;//Get coordstring using the name of the button
+            int i = (int)char.GetNumericValue(coordstring[0]); //Get the horizontal value using first char
+            int j = (int)char.GetNumericValue(coordstring[1]); //Get the vertical value using second char
+            string piece = dictionaries.GetBoard(i, j);
+            string piececolour = dictionaries.GetPieceColour(piece); //Get colour
+            //MessageBox.Show($"You selected the piece at ({i},{j}). This piece is a {dictionaries.GetBoard(i, j)}");
+            if (currentlyselected == "") //No piece selected
+            {
+                if (piece==""||piececolour!=turn) { return; } //No piece at place or not possible place, nothing to select
+                currentlyselected = coordstring; //Set currently selected to the coordinate
+                btn.BackColor = Color.ForestGreen; //Set back colour to show the selected piece
+                btn.FlatAppearance.MouseOverBackColor = Color.ForestGreen; //Set the mouse over back colour
+            } else if (piece != "") //Piece already selected, piece at new coord isnt blank
+            {
+                //Attempt to take the piece at this coordinate.
+                if (piececolour==dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentlyselected)))
+                {
+                    //If colour of new piece is same as colour of currently selected, new piece is now selected
+                    currentlyselected = coordstring;
+                    btn.BackColor= Color.ForestGreen;
+                    btn.FlatAppearance.MouseOverBackColor= Color.ForestGreen;
+                } else
+                {
+                    //Now attempt to take piece
+                    bool moveValid = Viable(coordstring, currentlyselected);
+                    if (moveValid)
+                    {
+                        Move(i,j);
+                        if (turn == "white") { turn = "black"; } else { turn = "white"; }
+                    } else
+                    {
+                        //Move cannot be done, set the button to transparent and unselect it.
+                        Button currentButton = (Button)Controls.Find(currentlyselected, true)[0];
+                        currentButton.BackColor = Color.Transparent;
+                        currentButton.FlatAppearance.MouseOverBackColor = Color.Transparent;
+                        currentlyselected = "";
+                    }
+                }
+            } else if (piece=="") //No piece at new coord
+            {
+                //Attempt to move to the blank spot in the new coord
+                bool moveValid = Viable(coordstring, currentlyselected);
+                if (moveValid)
+                {
+                    Move(i,j);
+                    if (turn == "white") { turn = "black"; } else { turn = "white"; }
+                } else
+                {
+                    //Move cannot be done, set the button to transparent and unselect it.
+                    Button currentButton = (Button)Controls.Find(currentlyselected, true)[0];
+                    currentButton.BackColor = Color.Transparent;
+                    currentButton.FlatAppearance.MouseOverBackColor = Color.Transparent;
+                    currentlyselected = "";
+                }
+            }
+            ClearUnselected();
+        }
+        private void SetImages()
+        {
+            for (int i=0;i<8;i++)
+            {
+                for (int j=0;j<8;j++)
+                {
+                    Button btn = (Button)Controls.Find(i.ToString() + j.ToString(), true)[0]; //Find button from controls object
+                    SetButtonImage(btn, i.ToString() + j.ToString()); //Set image of button
+                }
+            }
+        }
+        private void Move(int i, int j)
+        {
+            //Set piece at coord to currently selected piece
+            dictionaries.SetBoard(i, j, dictionaries.GetPieceWithCoordString(currentlyselected));
+            //Get current coords
+            int currentlyi = (int)char.GetNumericValue(currentlyselected[0]);
+            int currentlyj = (int)char.GetNumericValue(currentlyselected[1]);
+            currentlyselected = ""; //Set currentlyselected to nothing
+            dictionaries.SetBoard(currentlyi, currentlyj, ""); //Set old pos to nothing as piece has moved
+            SetImages();
+            ClearUnselected(); //Clear image backgrounds
+        }
+        private void ClearUnselected()
+        {
+            for (int x=0;x<8;x++)
+            {
+                for (int y=0;y<8;y++)
+                {
+                    if (currentlyselected!=x.ToString() + y.ToString())
+                    {
+                        Button btn = (Button)Controls.Find(x.ToString() + y.ToString(), true)[0]; //Find button from controls object
+                        btn.BackColor = Color.Transparent;
+                        btn.FlatAppearance.MouseOverBackColor = Color.Transparent;
+                    }
                 }
             }
         }
@@ -180,6 +284,36 @@ namespace WindowsFormsApp1
                     break;
             }
 
+        }
+        private bool Viable(string coordstring, string curselected)
+        {
+            bool viable = false; //Set to false initially
+            string pieceabbrev = dictionaries.GetPieceWithCoordString(coordstring);
+            string piececolour = dictionaries.GetPieceColour(pieceabbrev);
+            string curabbrev = dictionaries.GetPieceWithCoordString(curselected);
+            string curcolour = dictionaries.GetPieceColour(curabbrev);
+            int i = (int)char.GetNumericValue(coordstring[0]); //Get horizontal of piece to try take
+            int j = (int)char.GetNumericValue(coordstring[1]); //Get vertical of piece to try take
+            int curi = (int)char.GetNumericValue(curselected[0]); //Get horizontal of current
+            int curj = (int)char.GetNumericValue(curselected[1]); //Get vertical of current
+            (int i, int j) attemptedmove = (i - curi, j - curj); //Make tuple of the attempted move
+            if (curabbrev == "WH" || curabbrev == "BH")
+            {
+                int idiff = Math.Abs(i - curi);
+                int jdiff = Math.Abs(j - curj);
+                if (idiff == 2 && jdiff == 1 || idiff == 1 && jdiff == 2) { return true; }
+                else { return false; }
+            }
+            if (curabbrev == "WP" || curabbrev == "BP")
+            {
+                int idiff = i - curi; //Get horizontal difference
+                int jdiff = j - curj; //Get vertical difference
+                if (pieceabbrev!="") //Not attempting to take a piece
+                {
+                    if (idiff!=0) { return false; } //Can't move horizontally when not trying to take a piece.
+                }
+            }
+            return viable;
         }
         private void Chess2_FormClosed(object sender, FormClosedEventArgs e)
         {
