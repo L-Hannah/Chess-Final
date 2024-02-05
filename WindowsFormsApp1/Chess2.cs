@@ -18,7 +18,9 @@ namespace WindowsFormsApp1
         string username;
         string colour;
         string currentlyselected=""; //Holds the currently selected piece.
-        string turn = "white";
+        string turn = "white"; //Holds current turn, always starts with white
+        bool WKIC = false; //White king in check, starts as false
+        bool BKIC = false; //Black king in check, starts as false
         Dictionaries dictionaries;
         public Chess2(string uname)
         {
@@ -287,7 +289,6 @@ namespace WindowsFormsApp1
         }
         private bool Viable(string coordstring, string curselected, bool overRide, string newabbrev)
         {
-            bool viable = false; //Set to false initially
             string pieceabbrev = dictionaries.GetPieceWithCoordString(coordstring);
             string curabbrev = dictionaries.GetPieceWithCoordString(curselected);
             if (overRide) { curabbrev = newabbrev; }
@@ -547,7 +548,26 @@ namespace WindowsFormsApp1
                     return false;
                 }
             }
-            return viable;
+            return false;
+        }
+        private void Check()
+        {
+            //Get king coords
+            string WK_coord = dictionaries.FindIndex("WK");
+            string WKIC_coord = dictionaries.FindIndex("WKIC");
+            string BK_coord = dictionaries.FindIndex("BK");
+            string BKIC_coord = dictionaries.FindIndex("BKIC");
+            if (WK_coord==""&&WKIC_coord=="")
+            {
+                //No white king for some reason
+                return;
+            }
+            if (BK_coord==""&&BKIC_coord=="")
+            {
+                //No black king for some reason
+                return;
+            }
+            int whitekingcounter = 0;
         }
         private void Chess2_FormClosed(object sender, FormClosedEventArgs e)
         {
