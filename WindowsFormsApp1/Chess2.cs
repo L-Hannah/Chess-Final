@@ -289,7 +289,6 @@ namespace WindowsFormsApp1
         {
             bool viable = false; //Set to false initially
             string pieceabbrev = dictionaries.GetPieceWithCoordString(coordstring);
-            string piececolour = dictionaries.GetPieceColour(pieceabbrev);
             string curabbrev = dictionaries.GetPieceWithCoordString(curselected);
             if (overRide) { curabbrev = newabbrev; }
             string curcolour = dictionaries.GetPieceColour(curabbrev);
@@ -535,6 +534,17 @@ namespace WindowsFormsApp1
                         //Move is valid for either black bishop or black rook
                         return true;
                     }
+                }
+            }
+            else if (curabbrev=="WKIC"||curabbrev=="BKIC"||curabbrev=="WK"||curabbrev=="BK")
+            {
+                //Can only move by a maximum of 1 in each direction, abs must be either 0 or 1
+                if (Math.Abs(i-curi)<=1 && Math.Abs(j-curj)<=1)
+                {
+                    return true;
+                } else
+                {
+                    return false;
                 }
             }
             return viable;
