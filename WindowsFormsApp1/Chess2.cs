@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -213,6 +214,7 @@ namespace WindowsFormsApp1
             int currentlyj = (int)char.GetNumericValue(currentlyselected[1]);
             currentlyselected = ""; //Set currentlyselected to nothing
             dictionaries.SetBoard(currentlyi, currentlyj, ""); //Set old pos to nothing as piece has moved
+            Check(); //See if either king is in check
             SetImages();
             ClearUnselected(); //Clear image backgrounds
         }
@@ -568,6 +570,99 @@ namespace WindowsFormsApp1
                 return;
             }
             int whitekingcounter = 0;
+            int blackkingcounter = 0;
+            for (int i = 0;i<8;i++)
+            {
+                for (int j = 0;j<8;j++)
+                {
+                    string currentCoord = i.ToString() + j.ToString();
+                    if (WK_coord!="") 
+                    {
+                        //If white king exists, not in check
+                        if (Viable(WK_coord, currentCoord, false, "")&&dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord))!="white")
+                        {
+                            //Piece can take king and isn't of the same colour
+                            WKIC = true;
+                            whitekingcounter++;
+                        }
+                    } else if (WKIC_coord!="")
+                    {
+                        //If white king in check exists
+                        if (Viable(WK_coord, currentCoord, false, "") && dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord)) != "white")
+                        {
+                            //Piece can take king and isn't of the same colour
+                            WKIC = true;
+                            whitekingcounter++;
+                        }
+                    }
+                    if (BK_coord!="")
+                    {
+                        //If black king exists but not in check
+                        if (Viable(BK_coord,currentCoord, false,"")&&dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord))!="black")
+                        {
+                            //Piece can take king and isnt of same colour
+                            BKIC = true;
+                            blackkingcounter++;
+                        }
+                    } else if (BKIC_coord!="")
+                    {
+                        //If black king exists but in check
+                        if (Viable(BKIC_coord,currentCoord,false,"")&&dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord))!="black")
+                        {
+                            //Piece can take king and isnt of same colour
+                            BKIC = true;
+                            blackkingcounter++;
+                        }
+                    }
+                }
+            }
+            if (whitekingcounter == 0)
+            {
+                //White king not in check, set variable to false
+                WKIC = false;
+                if (WKIC_coord!="") 
+                {
+                    //Need to get coordinates before using set board
+                    int i = (int)char.GetNumericValue(WKIC_coord[0]);
+                    int j = (int)char.GetNumericValue(WKIC_coord[1]);
+                    //Set back to "WK" value as no longer in check
+                    dictionaries.SetBoard(i, j, "WK");
+                }
+            }
+            if (blackkingcounter == 0)
+            {
+                BKIC = false;
+                if (BKIC_coord!="") 
+                {
+                    //Need to get the coordinates before using set board
+                    int i = (int)char.GetNumericValue(BKIC_coord[0]);
+                    int j = (int)char.GetNumericValue(BKIC_coord[1]);
+                    //Set back to "BK" value as no longer in check
+                    dictionaries.SetBoard(i, j, "BK");
+                }
+            }
+            if (WKIC)
+            {
+                if (WK_coord!="")
+                {
+                    //Need to get the coordinates before using set board
+                    int i = (int)char.GetNumericValue(WK_coord[0]);
+                    int j = (int)char.GetNumericValue(WK_coord[1]);
+                    //Set to "WKIC" value as now in check
+                    dictionaries.SetBoard(i, j, "WKIC");
+                }
+            }
+            if (BKIC)
+            {
+                if (BK_coord!="")
+                {
+                    //Need to get the coordinates before using set board
+                    int i = (int)char.GetNumericValue(BK_coord[0]);
+                    int j = (int)char.GetNumericValue(BK_coord[1]);
+                    //Set to "BKIC" value as now in check
+                    dictionaries.SetBoard(i, j, "BKIC");
+                }
+            }
         }
         private void Chess2_FormClosed(object sender, FormClosedEventArgs e)
         {
