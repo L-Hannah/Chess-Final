@@ -297,14 +297,14 @@ namespace WindowsFormsApp1
             int curi = (int)char.GetNumericValue(curselected[0]); //Get horizontal of current
             int curj = (int)char.GetNumericValue(curselected[1]); //Get vertical of current
             (int i, int j) attemptedmove = (i - curi, j - curj); //Make tuple of the attempted move
-            if (curabbrev == "WH" || curabbrev == "BH")
+            if (curabbrev=="WH"||curabbrev=="BH")
             {
                 int idiff = Math.Abs(i - curi);
                 int jdiff = Math.Abs(j - curj);
                 if (idiff == 2 && jdiff == 1 || idiff == 1 && jdiff == 2) { return true; }
                 else { return false; }
             }
-            else if (curabbrev == "WP" || curabbrev == "BP")
+            else if (curabbrev=="WP"||curabbrev=="BP")
             {
                 int idiff = i - curi; //Get horizontal difference
                 int jdiff = j - curj; //Get vertical difference
@@ -359,7 +359,7 @@ namespace WindowsFormsApp1
                     }
                 }
             }
-            else if (curabbrev =="BR"|| curabbrev =="WR")
+            else if (curabbrev=="BR"||curabbrev=="WR")
             {
                 List<(int, int)> possibleMoves = new List<(int, int)>(); //New list for possible moves
                 //Each max will add 1, as the for loop in C# isn't inclusive and must iterate enough times.
@@ -436,6 +436,86 @@ namespace WindowsFormsApp1
                     //Move is not possible
                     return false;
                 }
+            }
+            else if (curabbrev=="BB"||curabbrev=="WB")
+            {
+                //Difference in both x and y axis must be equal
+                if (Math.Abs(i-curi)!=Math.Abs(j-curj)) { return false; }
+                List<(int, int)> possibleMoves = new List<(int, int)>(); //New list for possible moves
+                //Each max will add 1, as the for loop in C# isn't inclusive and must iterate enough times.
+                int upwardsMax = Math.Abs(0 - curj) + 1; //Get upwards max from bound
+                int downwardsMax = Math.Abs(7 - curj) + 1; //Get downwards max from bound
+                int leftMax = Math.Abs(0 - curi) + 1; //Get left max from bound
+                int rightMax = Math.Abs(7 - curi) + 1; //Get right max from bound
+                for (int x=1;x<leftMax; x++)
+                {
+                    //Left and down
+                    if (x == downwardsMax) { break; } //Can't go outside of board
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi-x, curj+x));
+                    if (tempPieceColour!=curcolour)
+                    {
+                        possibleMoves.Add((-x, x)); //Moves by same value in each direction but left so -x for horizontal
+                        if (tempPieceColour!="") { break; }
+                    } else
+                    {
+                        //Same colour, cannot collide with this
+                        break;
+                    }
+                }
+                for (int x = 1; x < leftMax; x++)
+                {
+                    //Left and up
+                    if (x == upwardsMax) { break; } //Can't go outside of board
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi - x, curj - x));
+                    if (tempPieceColour != curcolour)
+                    {
+                        possibleMoves.Add((-x, -x)); //Moves by same value in each direction but left so -x for horizontal
+                        if (tempPieceColour != "") { break; }
+                    }
+                    else
+                    {
+                        //Same colour, cannot collide with this
+                        break;
+                    }
+                }
+                for (int x = 1; x < rightMax; x++)
+                {
+                    //Right and down
+                    if (x == downwardsMax) { break; }//Can't go outside of board
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi+x, curj + x));
+                    if (tempPieceColour != curcolour)
+                    {
+                        possibleMoves.Add((x, x)); //Moves by same value in each direction
+                        if (tempPieceColour != "") { break; };
+                    } 
+                    else
+                    {
+                        //Same colour, cannot collide with this
+                        break;
+                    }
+                }
+                for (int x = 1; x < rightMax; x++)
+                {
+                    //Right and up
+                    if (x == upwardsMax) { break; }//Can't go outside of board
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi + x, curj - x));
+                    if (tempPieceColour != curcolour)
+                    {
+                        possibleMoves.Add((x, -x)); //Moves by same value in each direction
+                        if (tempPieceColour != "") { break; };
+                    }
+                    else
+                    {
+                        //Same colour, cannot collide with this
+                        break;
+                    }
+                }
+                //If move possible, return true. If not, return false
+                if (possibleMoves.Contains(attemptedmove)) { return true; } else { return false; }
             }
             return viable;
         }
