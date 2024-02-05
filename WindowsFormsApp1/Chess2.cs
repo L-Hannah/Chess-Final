@@ -158,7 +158,7 @@ namespace WindowsFormsApp1
                 } else
                 {
                     //Now attempt to take piece
-                    bool moveValid = Viable(coordstring, currentlyselected);
+                    bool moveValid = Viable(coordstring, currentlyselected,false,"");
                     if (moveValid)
                     {
                         Move(i,j);
@@ -175,7 +175,7 @@ namespace WindowsFormsApp1
             } else if (piece=="") //No piece at new coord
             {
                 //Attempt to move to the blank spot in the new coord
-                bool moveValid = Viable(coordstring, currentlyselected);
+                bool moveValid = Viable(coordstring, currentlyselected,false,"");
                 if (moveValid)
                 {
                     Move(i,j);
@@ -285,12 +285,13 @@ namespace WindowsFormsApp1
             }
 
         }
-        private bool Viable(string coordstring, string curselected)
+        private bool Viable(string coordstring, string curselected, bool overRide, string newabbrev)
         {
             bool viable = false; //Set to false initially
             string pieceabbrev = dictionaries.GetPieceWithCoordString(coordstring);
             string piececolour = dictionaries.GetPieceColour(pieceabbrev);
             string curabbrev = dictionaries.GetPieceWithCoordString(curselected);
+            if (overRide) { curabbrev = newabbrev; }
             string curcolour = dictionaries.GetPieceColour(curabbrev);
             int i = (int)char.GetNumericValue(coordstring[0]); //Get horizontal of piece to try take
             int j = (int)char.GetNumericValue(coordstring[1]); //Get vertical of piece to try take
@@ -516,6 +517,25 @@ namespace WindowsFormsApp1
                 }
                 //If move possible, return true. If not, return false
                 if (possibleMoves.Contains(attemptedmove)) { return true; } else { return false; }
+            }
+            else if (curabbrev=="WQ"||curabbrev=="BQ")
+            {
+                string tempColour = dictionaries.GetPieceColour(curabbrev);
+                if (tempColour=="white")
+                {
+                    if (Viable(coordstring, curselected, true,"WB")||Viable(coordstring,curselected,true,"WR"))
+                    {
+                        //Move is valid for either white bishop or white rook
+                        return true;
+                    }
+                } else
+                {
+                    if (Viable(coordstring,curselected,true,"BB")||Viable(coordstring,curselected,true,"BR"))
+                    {
+                        //Move is valid for either black bishop or black rook
+                        return true;
+                    }
+                }
             }
             return viable;
         }
