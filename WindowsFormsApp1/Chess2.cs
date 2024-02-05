@@ -304,7 +304,7 @@ namespace WindowsFormsApp1
                 if (idiff == 2 && jdiff == 1 || idiff == 1 && jdiff == 2) { return true; }
                 else { return false; }
             }
-            if (curabbrev == "WP" || curabbrev == "BP")
+            else if (curabbrev == "WP" || curabbrev == "BP")
             {
                 int idiff = i - curi; //Get horizontal difference
                 int jdiff = j - curj; //Get vertical difference
@@ -342,7 +342,99 @@ namespace WindowsFormsApp1
                 else
                 {
                     //Attempting to take a piece
-
+                    if (Math.Abs(idiff)!=1) {return false;} //Can't take at a diff other than 1
+                    if (curcolour!=colour)//Not same colour as user
+                    {
+                        if (jdiff==1) //Moving down as opposing side
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        if (jdiff==-1) //Moving up as this is the user's side
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            else if (curabbrev =="BR"|| curabbrev =="WR")
+            {
+                List<(int, int)> possibleMoves = new List<(int, int)>(); //New list for possible moves
+                //Each max will add 1, as the for loop in C# isn't inclusive and must iterate enough times.
+                int upwardsMax = Math.Abs(0 - curj) + 1; //Get upwards max from bound
+                int downwardsMax = Math.Abs(7 - curj) + 1; //Get downwards max from bound
+                int leftMax = Math.Abs(0 - curi) + 1; //Get left max from bound
+                int rightMax = Math.Abs(7 - curi) + 1; //Get right max from bound
+                for (int x = 1; x < upwardsMax; x++)
+                {
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi, curj - x));
+                    if (tempPieceColour!=curcolour)//Either blank or enemy
+                    {
+                        possibleMoves.Add((0, -x)); //Add as possible move
+                        if (tempPieceColour != "") { break; } //If Enemy, this is last possible move
+                    } else
+                    {
+                        //Can't collide with own colour
+                        break;
+                    }
+                }
+                for (int x = 1; x<downwardsMax; x++)
+                {
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi, curj + x));
+                    if (tempPieceColour != curcolour)//Either blank or enemy
+                    {
+                        possibleMoves.Add((0, +x)); //Add as possible move
+                        if (tempPieceColour != "") { break; } //If Enemy, this is last possible move
+                    }
+                    else
+                    {
+                        //Can't collide with own colour
+                        break;
+                    }
+                }
+                for (int x=1;x<leftMax; x++)
+                {
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi-x,curj));
+                    if (tempPieceColour!=curcolour)//Either blank or enemy
+                    {
+                        possibleMoves.Add((-x, 0)); //Add as possible move
+                        if (tempPieceColour!="") { break; } //If enemy, this is last possible move
+                    }
+                    else
+                    {
+                        //Can't collide with own colour
+                        break;
+                    }
+                }
+                for (int x = 1; x < rightMax; x++)
+                {
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi + x, curj));
+                    if (tempPieceColour != curcolour)//Either blank or enemy
+                    { 
+                        possibleMoves.Add((x, 0)); //Add as possible move
+                        if (tempPieceColour != "") { break; } //If enemy, this is last possible move
+                    }
+                    else
+                    {
+                        //Can't collide with own colour
+                        break;
+                    }
+                }
+                if (possibleMoves.Contains(attemptedmove))
+                {
+                    //Move is possible
+                    return true;
+                } 
+                else 
+                {
+                    //Move is not possible
+                    return false;
                 }
             }
             return viable;
