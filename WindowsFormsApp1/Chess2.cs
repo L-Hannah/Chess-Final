@@ -23,6 +23,7 @@ namespace WindowsFormsApp1
         bool WKIC = false; //White king in check, starts as false
         bool BKIC = false; //Black king in check, starts as false
         Dictionaries dictionaries;
+        HypotheticalChess hypotheticalChess;
         public Chess2(string uname)
         {
             username = uname;
@@ -32,6 +33,7 @@ namespace WindowsFormsApp1
         private void Chess2_Load(object sender, EventArgs e)
         {
             colour = "white";
+            hypotheticalChess = new HypotheticalChess(colour, BKIC, WKIC);
             PlayGame();
         }
         private void PlayGame()
@@ -164,8 +166,19 @@ namespace WindowsFormsApp1
                     bool moveValid = Viable(coordstring, currentlyselected,false,"");
                     if (moveValid)
                     {
-                        Move(i,j);
-                        if (turn == "white") { turn = "black"; } else { turn = "white"; }
+                        bool determineValid = hypotheticalChess.DetermineValid(coordstring, currentlyselected, dictionaries.Board);
+                        if (!determineValid)
+                        {
+                            //Move cannot be done, set the button to transparent and unselect it.
+                            Button currentButton = (Button)Controls.Find(currentlyselected, true)[0];
+                            currentButton.BackColor = Color.Transparent;
+                            currentButton.FlatAppearance.MouseOverBackColor = Color.Transparent;
+                            currentlyselected = "";
+                        } else
+                        {
+                            Move(i, j);
+                            if (turn == "white") { turn = "black"; } else { turn = "white"; }
+                        }
                     } else
                     {
                         //Move cannot be done, set the button to transparent and unselect it.
@@ -181,8 +194,21 @@ namespace WindowsFormsApp1
                 bool moveValid = Viable(coordstring, currentlyselected,false,"");
                 if (moveValid)
                 {
-                    Move(i,j);
-                    if (turn == "white") { turn = "black"; } else { turn = "white"; }
+                    bool determineValid = hypotheticalChess.DetermineValid(coordstring, currentlyselected, dictionaries.Board);
+                    if (!determineValid)
+                    {
+                        //Move cannot be done, set the button to transparent and unselect it.
+                        Button currentButton = (Button)Controls.Find(currentlyselected, true)[0];
+                        currentButton.BackColor = Color.Transparent;
+                        currentButton.FlatAppearance.MouseOverBackColor = Color.Transparent;
+                        currentlyselected = "";
+                    }
+                    else
+                    {
+                        //Move does not put user into check, it can be done
+                        Move(i, j);
+                        if (turn == "white") { turn = "black"; } else { turn = "white"; }
+                    }
                 } else
                 {
                     //Move cannot be done, set the button to transparent and unselect it.
