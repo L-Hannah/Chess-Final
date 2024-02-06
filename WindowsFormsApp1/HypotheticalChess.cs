@@ -35,18 +35,22 @@ namespace WindowsFormsApp1
             Move(i, j, curselected);
             if (Check(currentColour)) { return false; } else { return true; }
         }
-        private bool CopyDictionary(Dictionary<(int,int),string> pastBoard)
+        private void CopyDictionary(Dictionary<(int,int),string> pastBoard)
         {
+            //Create new instance of board temporarily
             Dictionary<(int,int),string> tempBoard = new Dictionary<(int,int),string>();
+            //Nested for loop to iterate through the board and copy it
             for (int i=0; i<8; i++)
             {
                 for (int j=0; j<8; j++)
                 {
+                    //Add function
                     tempBoard.Add((i, j), pastBoard[(i,j)]);
                 }
             }
+            //Set board within the dictionaries class to the newly copied one
             dictionaries.Board = tempBoard;
-            return false;
+            return;
         }
         private bool Move(int i, int j, string curselected)
         {
