@@ -33,6 +33,10 @@ namespace WindowsFormsApp1
         //These two will be for the kings
         bool whiteKingMoved = false;
         bool blackKingMoved = false;
+        //For castling logic again
+        bool castling = false;
+        string rookOldCoords;
+        string rookNewCoords;
         public Chess2(string uname)
         {
             username = uname;
@@ -250,6 +254,18 @@ namespace WindowsFormsApp1
             int currentlyj = (int)char.GetNumericValue(currentlyselected[1]);
             currentlyselected = ""; //Set currentlyselected to nothing
             dictionaries.SetBoard(currentlyi, currentlyj, ""); //Set old pos to nothing as piece has moved
+            if (castling)
+            {
+                //Castling, need rook value and coordinates.
+                string currentRook = dictionaries.GetPieceWithCoordString(rookOldCoords);
+                int oldRookI = (int)char.GetNumericValue(rookOldCoords[0]);
+                int oldRookJ = (int)char.GetNumericValue(rookOldCoords[1]);
+                int newRookI = (int)char.GetNumericValue(rookNewCoords[0]);
+                int newRookJ = (int)char.GetNumericValue(rookNewCoords[1]);
+                dictionaries.SetBoard(oldRookI, oldRookJ, "");
+                dictionaries.SetBoard(newRookI, newRookJ, currentRook);
+                castling = false;
+            }
             Check(); //See if either king is in check
             SetImages();
             ClearUnselected(); //Clear image backgrounds
@@ -290,6 +306,8 @@ namespace WindowsFormsApp1
                             if (dictionaries.GetBoard(kingI-i,kingJ)!="") { break; } else {  emptyCounter++; }
                         }
                         if (emptyCounter<3) {  return false; }
+                        rookOldCoords = "07";
+                        rookNewCoords = "37";
                         return hypotheticalChess.DetermineValid("37", "47", dictionaries.Board) && hypotheticalChess.DetermineValid("27", "47", dictionaries.Board);
                     }
                     if (direction=="right")
@@ -300,6 +318,8 @@ namespace WindowsFormsApp1
                             if (dictionaries.GetBoard(kingI+1,kingJ)!="") { break; } else { emptyCounter++; }
                         }
                         if (emptyCounter<2) { return false; }
+                        rookOldCoords = "77";
+                        rookNewCoords = "57";
                         return hypotheticalChess.DetermineValid("57", "47", dictionaries.Board) || !hypotheticalChess.DetermineValid("67", "47", dictionaries.Board);
                     }
                 }
@@ -323,6 +343,8 @@ namespace WindowsFormsApp1
                             if (dictionaries.GetBoard(kingI + i, kingJ) != "") { break; } else { emptyCounter++; }
                         }
                         if (emptyCounter < 3) { return false; }
+                        rookOldCoords = "70";
+                        rookNewCoords = "40";
                         return hypotheticalChess.DetermineValid("50", "40", dictionaries.Board) && hypotheticalChess.DetermineValid("60", "40", dictionaries.Board);
                     }
                     if (direction == "right")
@@ -333,6 +355,8 @@ namespace WindowsFormsApp1
                             if (dictionaries.GetBoard(kingI - 1, kingJ) != "") { break; } else { emptyCounter++; }
                         }
                         if (emptyCounter < 2) { return false; }
+                        rookOldCoords = "00";
+                        rookNewCoords = "20";
                         return hypotheticalChess.DetermineValid("30", "40", dictionaries.Board) || !hypotheticalChess.DetermineValid("20", "40", dictionaries.Board);
                     }
                 }
@@ -361,6 +385,8 @@ namespace WindowsFormsApp1
                             if (dictionaries.GetBoard(kingI - i, kingJ) != "") { break; } else { emptyCounter++; }
                         }
                         if (emptyCounter < 2) { return false; }
+                        rookOldCoords = "07";
+                        rookNewCoords = "27";
                         return hypotheticalChess.DetermineValid("27", "37", dictionaries.Board) && hypotheticalChess.DetermineValid("17", "37", dictionaries.Board);
                     }
                     if (direction == "right")
@@ -371,6 +397,8 @@ namespace WindowsFormsApp1
                             if (dictionaries.GetBoard(kingI + 1, kingJ) != "") { break; } else { emptyCounter++; }
                         }
                         if (emptyCounter < 3) { return false; }
+                        rookOldCoords = "77";
+                        rookNewCoords = "47";
                         return hypotheticalChess.DetermineValid("57", "47", dictionaries.Board) || !hypotheticalChess.DetermineValid("67", "47", dictionaries.Board);
                     }
                 }
@@ -394,6 +422,8 @@ namespace WindowsFormsApp1
                             if (dictionaries.GetBoard(kingI + i, kingJ) != "") { break; } else { emptyCounter++; }
                         }
                         if (emptyCounter < 2) { return false; }
+                        rookOldCoords = "70";
+                        rookNewCoords = "50";
                         return hypotheticalChess.DetermineValid("50", "40", dictionaries.Board) && hypotheticalChess.DetermineValid("60", "40", dictionaries.Board);
                     }
                     if (direction == "right")
@@ -404,6 +434,8 @@ namespace WindowsFormsApp1
                             if (dictionaries.GetBoard(kingI - 1, kingJ) != "") { break; } else { emptyCounter++; }
                         }
                         if (emptyCounter < 3) { return false; }
+                        rookOldCoords = "00";
+                        rookNewCoords = "30";
                         return hypotheticalChess.DetermineValid("30", "40", dictionaries.Board) || !hypotheticalChess.DetermineValid("20", "40", dictionaries.Board);
                     }
                 }
@@ -754,10 +786,11 @@ namespace WindowsFormsApp1
                             else { direction = "left"; }
                         }
                         bool castle = CheckForCastle(curcolour, direction);
-                        if (!castle)
+                        if (castle) { castling = true; }
+                        /*if (!castle)
                         {
                             MessageBox.Show($"Could not castle. curcolour: [{curcolour}], direction: [{direction}]");
-                        }
+                        }*/
                         return castle;
                     }
                     return false;
