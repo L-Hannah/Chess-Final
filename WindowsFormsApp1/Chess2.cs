@@ -24,6 +24,15 @@ namespace WindowsFormsApp1
         bool BKIC = false; //Black king in check, starts as false
         Dictionaries dictionaries;
         HypotheticalChess hypotheticalChess;
+        //These two will be for whichever colour is at the top
+        bool zeroZeroRookMoved = false;
+        bool sevenZeroRookMoved = false;
+        //These two will be for whichever colour is at the bottom
+        bool zeroSevenRookMoved = false;
+        bool sevenSevenRookMoved = false;
+        //These two will be for the kings
+        bool whiteKingMoved = false;
+        bool blackKingMoved = false;
         public Chess2(string uname)
         {
             username = uname;
@@ -233,8 +242,9 @@ namespace WindowsFormsApp1
         }
         private void Move(int i, int j)
         {
+            string currentlySelectedPiece = dictionaries.GetPieceWithCoordString(currentlyselected);
             //Set piece at coord to currently selected piece
-            dictionaries.SetBoard(i, j, dictionaries.GetPieceWithCoordString(currentlyselected));
+            dictionaries.SetBoard(i, j, currentlySelectedPiece);
             //Get current coords
             int currentlyi = (int)char.GetNumericValue(currentlyselected[0]);
             int currentlyj = (int)char.GetNumericValue(currentlyselected[1]);
@@ -243,6 +253,162 @@ namespace WindowsFormsApp1
             Check(); //See if either king is in check
             SetImages();
             ClearUnselected(); //Clear image backgrounds
+            if (currentlySelectedPiece=="WK") { whiteKingMoved= true; }
+            if (currentlySelectedPiece=="BK") { blackKingMoved= true; }
+            if (currentlySelectedPiece == "WR" || currentlySelectedPiece == "BR")
+            {
+                if (currentlyi == 0 && currentlyj == 7) { zeroSevenRookMoved = true; }
+                else if (currentlyi == 7 && currentlyj == 7) { sevenSevenRookMoved = true; }
+                else if (currentlyi == 0 && currentlyj == 0) { zeroZeroRookMoved = true; }
+                else if (currentlyi == 7 && currentlyj == 0) {  sevenZeroRookMoved = true; }
+            }
+        }
+        private bool CheckForCastle(string kingColour, string direction)
+        {
+            //Takes in king colour and checks if that king can castle
+            if (kingColour=="white")
+            {
+                //Instantly return false if king in check
+                if (WKIC) { return false; }
+                if (colour=="white")
+                {
+                    string kingCoord = dictionaries.FindIndex("WK");
+                    int kingI = (int)char.GetNumericValue(kingCoord[0]);
+                    int kingJ = (int)char.GetNumericValue(kingCoord[1]);
+                    //If white king moved, returns false no matter what
+                    if (whiteKingMoved) { return false; }
+                    //Left direction needs rook at (0,7) to have not moved.
+                    if (direction=="left"&&zeroSevenRookMoved) { return false; }
+                    //Right direction needs rook at (7,7) to have not moved.
+                    if (direction == "right" && sevenSevenRookMoved) { return false; }
+                    if (direction=="left")
+                    {
+                        int emptyCounter = 0;
+                        for (int i = 1; i< 4;i++)
+                        {
+                            //If not empty, break out of loop. If empty, add to counter.
+                            if (dictionaries.GetBoard(kingI-i,kingJ)!="") { break; } else {  emptyCounter++; }
+                        }
+                        if (emptyCounter<3) {  return false; }
+                        return hypotheticalChess.DetermineValid("37", "47", dictionaries.Board) && hypotheticalChess.DetermineValid("27", "47", dictionaries.Board);
+                    }
+                    if (direction=="right")
+                    {
+                        int emptyCounter = 0;
+                        for (int i=1; i< 3;i++)
+                        {
+                            if (dictionaries.GetBoard(kingI+1,kingJ)!="") { break; } else { emptyCounter++; }
+                        }
+                        if (emptyCounter<2) { return false; }
+                        return hypotheticalChess.DetermineValid("57", "47", dictionaries.Board) || !hypotheticalChess.DetermineValid("67", "47", dictionaries.Board);
+                    }
+                }
+                if (colour=="black")
+                {
+                    string kingCoord = dictionaries.FindIndex("WK");
+                    int kingI = (int)char.GetNumericValue(kingCoord[0]);
+                    int kingJ = (int)char.GetNumericValue(kingCoord[1]);
+                    //If white king moved, returns false no matter what
+                    if (whiteKingMoved) { return false; }
+                    //Left direction needs rook at (7,0) to have not moved.
+                    if (direction == "left" && sevenZeroRookMoved) { return false; }
+                    //Right direction needs rook at (0,0) to have not moved.
+                    if (direction == "right" && zeroZeroRookMoved) { return false; }
+                    if (direction == "left")
+                    {
+                        int emptyCounter = 0;
+                        for (int i = 1; i < 4; i++)
+                        {
+                            //If not empty, break out of loop. If empty, add to counter.
+                            if (dictionaries.GetBoard(kingI + i, kingJ) != "") { break; } else { emptyCounter++; }
+                        }
+                        if (emptyCounter < 3) { return false; }
+                        return hypotheticalChess.DetermineValid("50", "40", dictionaries.Board) && hypotheticalChess.DetermineValid("60", "40", dictionaries.Board);
+                    }
+                    if (direction == "right")
+                    {
+                        int emptyCounter = 0;
+                        for (int i = 1; i < 3; i++)
+                        {
+                            if (dictionaries.GetBoard(kingI - 1, kingJ) != "") { break; } else { emptyCounter++; }
+                        }
+                        if (emptyCounter < 2) { return false; }
+                        return hypotheticalChess.DetermineValid("30", "40", dictionaries.Board) || !hypotheticalChess.DetermineValid("20", "40", dictionaries.Board);
+                    }
+                }
+            }
+            else if (kingColour == "black")
+            {
+                //Instantly return false if king in check
+                if (BKIC) { return false; }
+                if (colour == "black")
+                {
+                    string kingCoord = dictionaries.FindIndex("BK");
+                    int kingI = (int)char.GetNumericValue(kingCoord[0]);
+                    int kingJ = (int)char.GetNumericValue(kingCoord[1]);
+                    //If black king moved, returns false no matter what
+                    if (whiteKingMoved) { return false; }
+                    //Left direction needs rook at (0,7) to have not moved.
+                    if (direction == "left" && zeroSevenRookMoved) { return false; }
+                    //Right direction needs rook at (7,7) to have not moved.
+                    if (direction == "right" && sevenSevenRookMoved) { return false; }
+                    if (direction == "left")
+                    {
+                        int emptyCounter = 0;
+                        for (int i = 1; i < 4; i++)
+                        {
+                            //If not empty, break out of loop. If empty, add to counter.
+                            if (dictionaries.GetBoard(kingI - i, kingJ) != "") { break; } else { emptyCounter++; }
+                        }
+                        if (emptyCounter < 3) { return false; }
+                        return hypotheticalChess.DetermineValid("37", "47", dictionaries.Board) && hypotheticalChess.DetermineValid("27", "47", dictionaries.Board);
+                    }
+                    if (direction == "right")
+                    {
+                        int emptyCounter = 0;
+                        for (int i = 1; i < 3; i++)
+                        {
+                            if (dictionaries.GetBoard(kingI + 1, kingJ) != "") { break; } else { emptyCounter++; }
+                        }
+                        if (emptyCounter < 2) { return false; }
+                        return hypotheticalChess.DetermineValid("57", "47", dictionaries.Board) || !hypotheticalChess.DetermineValid("67", "47", dictionaries.Board);
+                    }
+                }
+                if (colour == "white")
+                {
+                    string kingCoord = dictionaries.FindIndex("BK");
+                    int kingI = (int)char.GetNumericValue(kingCoord[0]);
+                    int kingJ = (int)char.GetNumericValue(kingCoord[1]);
+                    //If white king moved, returns false no matter what
+                    if (whiteKingMoved) { return false; }
+                    //Left direction needs rook at (7,0) to have not moved.
+                    if (direction == "left" && sevenZeroRookMoved) { return false; }
+                    //Right direction needs rook at (0,0) to have not moved.
+                    if (direction == "right" && zeroZeroRookMoved) { return false; }
+                    if (direction == "left")
+                    {
+                        int emptyCounter = 0;
+                        for (int i = 1; i < 4; i++)
+                        {
+                            //If not empty, break out of loop. If empty, add to counter.
+                            if (dictionaries.GetBoard(kingI + i, kingJ) != "") { break; } else { emptyCounter++; }
+                        }
+                        if (emptyCounter < 3) { return false; }
+                        return hypotheticalChess.DetermineValid("50", "40", dictionaries.Board) && hypotheticalChess.DetermineValid("60", "40", dictionaries.Board);
+                    }
+                    if (direction == "right")
+                    {
+                        int emptyCounter = 0;
+                        for (int i = 1; i < 3; i++)
+                        {
+                            if (dictionaries.GetBoard(kingI - 1, kingJ) != "") { break; } else { emptyCounter++; }
+                        }
+                        if (emptyCounter < 2) { return false; }
+                        return hypotheticalChess.DetermineValid("30", "40", dictionaries.Board) || !hypotheticalChess.DetermineValid("20", "40", dictionaries.Board);
+                    }
+                }
+            }
+            return false;
         }
         private void ClearUnselected()
         {
