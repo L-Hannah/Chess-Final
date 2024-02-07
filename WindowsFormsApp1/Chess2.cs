@@ -347,7 +347,7 @@ namespace WindowsFormsApp1
                     int kingI = (int)char.GetNumericValue(kingCoord[0]);
                     int kingJ = (int)char.GetNumericValue(kingCoord[1]);
                     //If black king moved, returns false no matter what
-                    if (whiteKingMoved) { return false; }
+                    if (blackKingMoved) { return false; }
                     //Left direction needs rook at (0,7) to have not moved.
                     if (direction == "left" && zeroSevenRookMoved) { return false; }
                     //Right direction needs rook at (7,7) to have not moved.
@@ -355,22 +355,22 @@ namespace WindowsFormsApp1
                     if (direction == "left")
                     {
                         int emptyCounter = 0;
-                        for (int i = 1; i < 4; i++)
+                        for (int i = 1; i < 3; i++)
                         {
                             //If not empty, break out of loop. If empty, add to counter.
                             if (dictionaries.GetBoard(kingI - i, kingJ) != "") { break; } else { emptyCounter++; }
                         }
-                        if (emptyCounter < 3) { return false; }
-                        return hypotheticalChess.DetermineValid("37", "47", dictionaries.Board) && hypotheticalChess.DetermineValid("27", "47", dictionaries.Board);
+                        if (emptyCounter < 2) { return false; }
+                        return hypotheticalChess.DetermineValid("27", "37", dictionaries.Board) && hypotheticalChess.DetermineValid("17", "37", dictionaries.Board);
                     }
                     if (direction == "right")
                     {
                         int emptyCounter = 0;
-                        for (int i = 1; i < 3; i++)
+                        for (int i = 1; i < 4; i++)
                         {
                             if (dictionaries.GetBoard(kingI + 1, kingJ) != "") { break; } else { emptyCounter++; }
                         }
-                        if (emptyCounter < 2) { return false; }
+                        if (emptyCounter < 3) { return false; }
                         return hypotheticalChess.DetermineValid("57", "47", dictionaries.Board) || !hypotheticalChess.DetermineValid("67", "47", dictionaries.Board);
                     }
                 }
@@ -380,7 +380,7 @@ namespace WindowsFormsApp1
                     int kingI = (int)char.GetNumericValue(kingCoord[0]);
                     int kingJ = (int)char.GetNumericValue(kingCoord[1]);
                     //If white king moved, returns false no matter what
-                    if (whiteKingMoved) { return false; }
+                    if (blackKingMoved) { return false; }
                     //Left direction needs rook at (7,0) to have not moved.
                     if (direction == "left" && sevenZeroRookMoved) { return false; }
                     //Right direction needs rook at (0,0) to have not moved.
@@ -388,22 +388,22 @@ namespace WindowsFormsApp1
                     if (direction == "left")
                     {
                         int emptyCounter = 0;
-                        for (int i = 1; i < 4; i++)
+                        for (int i = 1; i < 3; i++)
                         {
                             //If not empty, break out of loop. If empty, add to counter.
                             if (dictionaries.GetBoard(kingI + i, kingJ) != "") { break; } else { emptyCounter++; }
                         }
-                        if (emptyCounter < 3) { return false; }
+                        if (emptyCounter < 2) { return false; }
                         return hypotheticalChess.DetermineValid("50", "40", dictionaries.Board) && hypotheticalChess.DetermineValid("60", "40", dictionaries.Board);
                     }
                     if (direction == "right")
                     {
                         int emptyCounter = 0;
-                        for (int i = 1; i < 3; i++)
+                        for (int i = 1; i < 4; i++)
                         {
                             if (dictionaries.GetBoard(kingI - 1, kingJ) != "") { break; } else { emptyCounter++; }
                         }
-                        if (emptyCounter < 2) { return false; }
+                        if (emptyCounter < 3) { return false; }
                         return hypotheticalChess.DetermineValid("30", "40", dictionaries.Board) || !hypotheticalChess.DetermineValid("20", "40", dictionaries.Board);
                     }
                 }
@@ -739,6 +739,27 @@ namespace WindowsFormsApp1
                     return true;
                 } else
                 {
+                    //King attempting to castle possibly
+                    if ((curabbrev=="WK"||curabbrev=="BK")&&Math.Abs(i-curi)==2&&j-curj==0)
+                    {
+                        string direction;
+                        if (curcolour == colour)
+                        {
+                            if (i - curi == -2) { direction = "left"; }
+                            else { direction = "right"; }
+                        }
+                        else
+                        {
+                            if (i - curi == -2) { direction = "right"; }
+                            else { direction = "left"; }
+                        }
+                        bool castle = CheckForCastle(curcolour, direction);
+                        if (!castle)
+                        {
+                            MessageBox.Show($"Could not castle. curcolour: [{curcolour}], direction: [{direction}]");
+                        }
+                        return castle;
+                    }
                     return false;
                 }
             }
