@@ -40,6 +40,8 @@ namespace WindowsFormsApp1
         string rookNewCoords;
         //Create a list of objects that hold the data for en passant
         List<EnPassantData> EnPassantList = new List<EnPassantData>();
+        bool EnPassanting = false;
+        (int, int) EnPassantRemove;
         public Chess2(string uname)
         {
             username = uname;
@@ -268,6 +270,12 @@ namespace WindowsFormsApp1
                 dictionaries.SetBoard(oldRookI, oldRookJ, "");
                 dictionaries.SetBoard(newRookI, newRookJ, currentRook);
                 castling = false;
+            }
+            if (EnPassanting)
+            {
+                //En passanting, set the coords to empty
+                dictionaries.SetBoard(EnPassantRemove.Item1, EnPassantRemove.Item2, "");
+                EnPassanting = false;
             }
             Check(); //See if either king is in check
             SetImages();
@@ -553,6 +561,21 @@ namespace WindowsFormsApp1
                 int jdiff = j - curj; //Get vertical difference
                 if (pieceabbrev=="") //Not attempting to take a piece
                 {
+                    if (Math.Abs(idiff)==1&&Math.Abs(jdiff)==1)
+                    {
+                        //Only time this will be valid is for en passant
+                        foreach (var data in EnPassantList)
+                        {
+                            //Must be different colour and attempted move should be the empty value
+                            if (data.Colour!=curcolour && data.Empty==(i,j))
+                            {
+                                //Set the boolean to true and the remove to the attribute
+                                EnPassanting = true;
+                                EnPassantRemove = data.Take;
+                                return true;
+                            }
+                        }
+                    }
                     if (idiff!=0) { return false; } //Can't move horizontally when not trying to take a piece.
                     if (curcolour!=colour)
                     {
@@ -564,7 +587,7 @@ namespace WindowsFormsApp1
                         {
                             if (dictionaries.GetBoard(curi,curj+1)==""&&dictionaries.GetBoard(curi,curj+2)=="")
                             {
-                                EnPassantList.Add(new EnPassantData((curi, curj + 1), (curi, curj + 2)));
+                                EnPassantList.Add(new EnPassantData((curi, curj + 1), (curi, curj + 2),curcolour));
                                 return true; //Move is valid as no pieces in the way.
                             }
                         }
@@ -578,7 +601,7 @@ namespace WindowsFormsApp1
                         {
                             if (dictionaries.GetBoard(curi, curj-1) == "" && dictionaries.GetBoard(curi, curj-2) == "")
                             {
-                                EnPassantList.Add(new EnPassantData((curi,curj-1), (curi,curj-2)));
+                                EnPassantList.Add(new EnPassantData((curi,curj-1), (curi,curj-2),curcolour));
                                 return true; //Move is valid as no pieces in the way.
                             }
                         }
