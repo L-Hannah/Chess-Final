@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Windows.Forms;
 using WindowsFormsApp1.Properties;
+using WindowsFormsApp1y;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace WindowsFormsApp1
@@ -37,6 +38,8 @@ namespace WindowsFormsApp1
         bool castling = false;
         string rookOldCoords;
         string rookNewCoords;
+        //Create a list of objects that hold the data for en passant
+        List<EnPassantData> EnPassantList = new List<EnPassantData>();
         public Chess2(string uname)
         {
             username = uname;
@@ -277,6 +280,19 @@ namespace WindowsFormsApp1
                 else if (currentlyi == 7 && currentlyj == 7) { sevenSevenRookMoved = true; }
                 else if (currentlyi == 0 && currentlyj == 0) { zeroZeroRookMoved = true; }
                 else if (currentlyi == 7 && currentlyj == 0) {  sevenZeroRookMoved = true; }
+            }
+            //Iterate through the en passant list and add one to the movecount
+            foreach (var data in EnPassantList)
+            {
+                data.MoveCount++;
+            }
+            //Check each element's move count and remove if it has been there for >1 move
+            for (int x=EnPassantList.Count-1; x>=0;x--)
+            {
+                if (EnPassantList[x].MoveCount>1)
+                {
+                    EnPassantList.RemoveAt(x);
+                }
             }
         }
         private bool CheckForCastle(string kingColour, string direction)
@@ -548,6 +564,7 @@ namespace WindowsFormsApp1
                         {
                             if (dictionaries.GetBoard(curi,curj+1)==""&&dictionaries.GetBoard(curi,curj+2)=="")
                             {
+                                EnPassantList.Add(new EnPassantData((curi, curj + 1), (curi, curj + 2)));
                                 return true; //Move is valid as no pieces in the way.
                             }
                         }
@@ -561,6 +578,7 @@ namespace WindowsFormsApp1
                         {
                             if (dictionaries.GetBoard(curi, curj-1) == "" && dictionaries.GetBoard(curi, curj-2) == "")
                             {
+                                EnPassantList.Add(new EnPassantData((curi,curj-1), (curi,curj-2)));
                                 return true; //Move is valid as no pieces in the way.
                             }
                         }
