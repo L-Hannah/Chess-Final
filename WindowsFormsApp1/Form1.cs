@@ -18,6 +18,7 @@ using MongoDB.Bson;
 using Newtonsoft.Json;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using Newtonsoft.Json.Linq;
 
 namespace WindowsFormsApp1
 {
@@ -312,6 +313,11 @@ namespace WindowsFormsApp1
                         }
                         if (!found)
                         {
+                            //If not found yet, see if email exists
+                            found = FindEmail(Email);
+                        }
+                        if (!found)
+                        {
                             //Attempt to create account here
                             string hashedPassword = ComputeSha256Hash(Password);
                             var values = new Dictionary<string, string>
@@ -445,6 +451,38 @@ namespace WindowsFormsApp1
             {
                 return $"Exception: {ex.Message}";
             }
+        }
+        private bool FindEmail(string Email)
+        {
+            //Set string array using empty get
+            string resultEntity = GetUser("");
+            BsonDocument[] bsonArray;
+            try
+            {
+                //Will be an array if anything is returned as empty get request always returns BSON array
+                bsonArray = BsonSerializer.Deserialize<BsonDocument[]>(resultEntity);
+            }
+            catch
+            {
+                //Anything other than the array will be an error
+                MessageBox.Show(resultEntity);
+                return false;
+            }
+            foreach (BsonDocument bsonDoc in bsonArray)
+            {
+                if (bsonDoc is BsonDocument)
+                {
+                    BsonValue value2;
+                    if (bsonDoc.TryGetValue("email", out value2))
+                    {
+                        if (value2.ToString()==Email)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
         }
         private Dictionary<string, object> ToDictionary(BsonDocument document)
         {
