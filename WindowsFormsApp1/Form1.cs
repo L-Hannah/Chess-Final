@@ -306,7 +306,9 @@ namespace WindowsFormsApp1
                         }
                         catch
                         {
-                            MessageBox.Show(resultEntity);
+                            //Don't need to show this as this is just for finding the user.
+                            //If the user doesn't exist, it is created here and so we don't need this shown
+                            //MessageBox.Show(resultEntity);
                         }
                         if (!found)
                         {
