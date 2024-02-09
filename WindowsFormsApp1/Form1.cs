@@ -17,6 +17,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace WindowsFormsApp1
 {
@@ -321,68 +322,23 @@ namespace WindowsFormsApp1
                 string hashedPassword = ComputeSha256Hash(Password); //Hash password
                 bool found = false;
                 string resultEntity = "";
-                var values = new Dictionary<string, string>
-                        {
-                            { "authorization", Authentication},
-                        };
-                string jsonContent = JsonConvert.SerializeObject(values);
-                StringContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                //Create URL to access specific user
-                string tempURL = ServerURL + "/"+Username;
-                var request = WebRequest.Create(tempURL);
-                System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-                request.ContentType = "application/json";
-                request.Method = "GET";
-                request.Headers.Add("authorization", Authentication);
-                var type = request.GetType();
-                var currentMethod = type.GetProperty("CurrentMethod", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(request);
-
-                var methodType = currentMethod.GetType();
-                methodType.GetField("ContentBodyNotAllowed", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(currentMethod, false);
-
-                using (var streamWriter = new StreamWriter(request.GetRequestStream()))
-                {
-                    streamWriter.Write(jsonContent);
-                }
+                BsonDocument bsonDocument;
+                Dictionary<string, object> dict;
+                MessageBox.Show("Test");
+                resultEntity = GetUser(Username);
                 try
                 {
-                    var response = request.GetResponse();
-                    var responseStream = response.GetResponseStream();
-                    if (responseStream != null)
-                    {
-                        var myStreamReader = new StreamReader(responseStream, Encoding.Default);
-                        resultEntity = myStreamReader.ReadToEnd();
-                    }
-                    responseStream.Close();
-                    response.Close();
+                    bsonDocument = BsonSerializer.Deserialize<BsonDocument>(resultEntity);
                     found = true;
-                }
-                catch (WebException ex)
-                {
-                    if (ex.Response is HttpWebResponse httpResponse)
-                    {
-                        if (httpResponse.StatusCode == HttpStatusCode.NotFound)
-                        {
-                            MessageBox.Show("User not found (404)");
-                        } else
-                        {
-                            MessageBox.Show($"Other HTTP error: {httpResponse.StatusCode}");
-                        }
-                    } else
-                    {
-                        MessageBox.Show($"WebException: {ex.Message}");
-                    }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Exception: {ex.Message}");
+                    MessageBox.Show(ex.Message);
                 }
                 if (found)
                 {
-                    //dynamic jsonObject = JsonConvert.DeserializeObject(resultEntity);
-                    //Dictionary<string, string> dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonObject.ToString());
-                    BsonDocument bsonDocument = BsonSerializer.Deserialize<BsonDocument>(resultEntity);
-                    Dictionary<string, object> dict = ToDictionary(bsonDocument);
+                    bsonDocument = BsonSerializer.Deserialize<BsonDocument>(resultEntity);
+                    dict = ToDictionary(bsonDocument);
                     if (dict["password"].ToString()==hashedPassword)
                     {
                         MessageBox.Show("Password correct.");
@@ -394,9 +350,66 @@ namespace WindowsFormsApp1
                 }
             }
         }
-        private string GetUser(string username)
+        private string GetUser(string Username)
         {
+            string resultEntity = "";
+            var values = new Dictionary<string, string>
+                        {
+                            { "authorization", Authentication},
+                        };
+            string jsonContent = JsonConvert.SerializeObject(values);
+            //Create URL to access specific user
+            string tempURL = ServerURL + "/" + Username;
+            var request = WebRequest.Create(tempURL);
+            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+            request.ContentType = "application/json";
+            request.Method = "GET";
+            request.Headers.Add("authorization", Authentication);
+            var type = request.GetType();
+            var currentMethod = type.GetProperty("CurrentMethod", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(request);
 
+            var methodType = currentMethod.GetType();
+            methodType.GetField("ContentBodyNotAllowed", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(currentMethod, false);
+
+            using (var streamWriter = new StreamWriter(request.GetRequestStream()))
+            {
+                streamWriter.Write(jsonContent);
+            }
+            try
+            {
+                var response = request.GetResponse();
+                var responseStream = response.GetResponseStream();
+                if (responseStream != null)
+                {
+                    var myStreamReader = new StreamReader(responseStream, Encoding.Default);
+                    resultEntity = myStreamReader.ReadToEnd();
+                }
+                responseStream.Close();
+                response.Close();
+                return resultEntity;
+            }
+            catch (WebException ex)
+            {
+                if (ex.Response is HttpWebResponse httpResponse)
+                {
+                    if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        return "User not found (404)";
+                    }
+                    else
+                    {
+                        return $"Other HTTP error: {httpResponse.StatusCode}";
+                    }
+                }
+                else
+                {
+                    return $"WebException: {ex.Message}";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Exception: {ex.Message}";
+            }
         }
         private Dictionary<string, object> ToDictionary(BsonDocument document)
         {
