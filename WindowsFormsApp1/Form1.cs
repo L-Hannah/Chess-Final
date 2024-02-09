@@ -3,16 +3,28 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Mime;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Newtonsoft.Json;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace WindowsFormsApp1
 {
     public partial class Form1 : Form
     {
         Chess2 ChessGUI;
+        private static readonly HttpClient client = new HttpClient();
+        private string ServerURL = "http://77.102.118.179:80/users";
+        private string Authentication = "WzYsEiJrjHX.4L0fbv_PQmwthFqGnD,8U1o3p-9x2lBKc5aZuNyRgS6T7ICMeVdkAaOA";
+
         public Form1()
         {
             InitializeComponent();
@@ -224,7 +236,24 @@ namespace WindowsFormsApp1
             ExitButton.Click += ExitGUI; //Add event handler for when button is clicked
             Controls.Add(ExitButton);
         }
-        private void SubmitButtonClick(object sender, EventArgs e)
+        private string ComputeSha256Hash(string rawData)
+        {
+            // Create a SHA256
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                // ComputeHash - returns byte array
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+
+                // Convert byte array to a string
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2"));
+                }
+                return builder.ToString();
+            }
+        }
+        private async void SubmitButtonClick(object sender, EventArgs e)
         {
             string Type = ""; //Set type to empty incase the code doesn't execute as intended.
             if (sender is Button clickedButton) //Cast to button
@@ -242,7 +271,7 @@ namespace WindowsFormsApp1
                     //This should not occur but error handling for if it does.
                     MessageBox.Show("Somehow managed to get a value of " + ButtonName + " as the button name??");
                 }
-            } 
+            }
             if (Type == "Signup") //If sender was the signup page button
             {
                 string Email = ((TextBox)Controls["EmailBox"]).Text.Trim();//Find box using name and get text attribute
@@ -265,6 +294,21 @@ namespace WindowsFormsApp1
                     {
                         MessageBox.Show("Information valid.");
                         //Attempt to create account here
+                        string hashedPassword = ComputeSha256Hash(Password);
+                        var values = new Dictionary<string, string>
+                        {
+                            { "authorization", Authentication},
+                            { "firstname", Firstname},
+                            { "lastname", Lastname},
+                            { "username", Username},
+                            { "email", Email},
+                            { "password", hashedPassword}
+                        };
+                        string jsonContent = JsonConvert.SerializeObject(values);
+                        StringContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                        var response = await client.PostAsync(ServerURL, content);
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show(responseString);
                     }
                 }
             } else if (Type == "Login") //If sender was the login page button
@@ -272,6 +316,64 @@ namespace WindowsFormsApp1
                 //Login code
                 string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
                 string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
+                string hashedPassword = ComputeSha256Hash(Password); //Hash password
+                var values = new Dictionary<string, string>
+                        {
+                            { "authorization", Authentication},
+                        };
+                string jsonContent = JsonConvert.SerializeObject(values);
+                StringContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                //Create URL to access specific user
+                string tempURL = ServerURL + "/"+Username;
+                var request = WebRequest.Create(tempURL);
+                System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+                request.ContentType = "application/json";
+                request.Method = "GET";
+                request.Headers.Add("authorization", Authentication);
+                var type = request.GetType();
+                var currentMethod = type.GetProperty("CurrentMethod", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(request);
+
+                var methodType = currentMethod.GetType();
+                methodType.GetField("ContentBodyNotAllowed", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(currentMethod, false);
+
+                using (var streamWriter = new StreamWriter(request.GetRequestStream()))
+                {
+                    streamWriter.Write(jsonContent);
+                }
+                try
+                {
+                    var response = request.GetResponse();
+                    var responseStream = response.GetResponseStream();
+                    string resultEntity = "";
+                    if (responseStream != null)
+                    {
+                        var myStreamReader = new StreamReader(responseStream, Encoding.Default);
+                        resultEntity = myStreamReader.ReadToEnd();
+                    }
+                    responseStream.Close();
+                    response.Close();
+                    MessageBox.Show(resultEntity);
+                }
+                catch (WebException ex)
+                {
+                    if (ex.Response is HttpWebResponse httpResponse)
+                    {
+                        if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                        {
+                            MessageBox.Show("User not found (404)");
+                        } else
+                        {
+                            MessageBox.Show($"Other HTTP error: {httpResponse.StatusCode}");
+                        }
+                    } else
+                    {
+                        MessageBox.Show($"WebException: {ex.Message}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Exception: {ex.Message}");
+                }
                 ShowChessGUI(Username); //Authenticated so we can pass the username in
             }
         }
