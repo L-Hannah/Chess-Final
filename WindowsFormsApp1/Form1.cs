@@ -337,7 +337,7 @@ namespace WindowsFormsApp1
                             ShowChessGUI(Username);
                         } else
                         {
-                            MessageBox.Show("User with this username already exists.");
+                            MessageBox.Show("User with this username/email already exists.");
                         }
                     }
                 }
