@@ -295,23 +295,42 @@ namespace WindowsFormsApp1
                     }
                     else
                     {
-                        MessageBox.Show("Information valid.");
-                        //Attempt to create account here
-                        string hashedPassword = ComputeSha256Hash(Password);
-                        var values = new Dictionary<string, string>
+                        //MessageBox.Show("Information valid.");
+                        //Test if user exists first or not
+                        string resultEntity = GetUser(Username);
+                        bool found=false;
+                        try
                         {
+                            BsonDocument bsonDocument = BsonSerializer.Deserialize<BsonDocument>(resultEntity);
+                            found = true;
+                        }
+                        catch
+                        {
+                            MessageBox.Show(resultEntity);
+                        }
+                        if (!found)
+                        {
+                            //Attempt to create account here
+                            string hashedPassword = ComputeSha256Hash(Password);
+                            var values = new Dictionary<string, string>
+                            {
                             { "authorization", Authentication},
                             { "firstname", Firstname},
                             { "lastname", Lastname},
                             { "username", Username},
                             { "email", Email},
                             { "password", hashedPassword}
-                        };
-                        string jsonContent = JsonConvert.SerializeObject(values);
-                        StringContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                        var response = await client.PostAsync(ServerURL, content);
-                        var responseString = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show(responseString);
+                            };
+                            string jsonContent = JsonConvert.SerializeObject(values);
+                            StringContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                            var response = await client.PostAsync(ServerURL, content);
+                            var responseString = await response.Content.ReadAsStringAsync();
+                            //MessageBox.Show(responseString);
+                            ShowChessGUI(Username);
+                        } else
+                        {
+                            MessageBox.Show("User with this username already exists.");
+                        }
                     }
                 }
             } else if (Type == "Login") //If sender was the login page button
@@ -321,19 +340,18 @@ namespace WindowsFormsApp1
                 string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
                 string hashedPassword = ComputeSha256Hash(Password); //Hash password
                 bool found = false;
-                string resultEntity = "";
+                string resultEntity;
                 BsonDocument bsonDocument;
                 Dictionary<string, object> dict;
-                MessageBox.Show("Test");
                 resultEntity = GetUser(Username);
                 try
                 {
                     bsonDocument = BsonSerializer.Deserialize<BsonDocument>(resultEntity);
                     found = true;
                 }
-                catch (Exception ex)
+                catch
                 {
-                    MessageBox.Show(ex.Message);
+                    MessageBox.Show(resultEntity);
                 }
                 if (found)
                 {
