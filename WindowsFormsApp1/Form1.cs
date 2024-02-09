@@ -13,6 +13,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson;
 using Newtonsoft.Json;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
@@ -317,6 +319,8 @@ namespace WindowsFormsApp1
                 string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
                 string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
                 string hashedPassword = ComputeSha256Hash(Password); //Hash password
+                bool found = false;
+                string resultEntity = "";
                 var values = new Dictionary<string, string>
                         {
                             { "authorization", Authentication},
@@ -344,7 +348,6 @@ namespace WindowsFormsApp1
                 {
                     var response = request.GetResponse();
                     var responseStream = response.GetResponseStream();
-                    string resultEntity = "";
                     if (responseStream != null)
                     {
                         var myStreamReader = new StreamReader(responseStream, Encoding.Default);
@@ -352,7 +355,7 @@ namespace WindowsFormsApp1
                     }
                     responseStream.Close();
                     response.Close();
-                    MessageBox.Show(resultEntity);
+                    found = true;
                 }
                 catch (WebException ex)
                 {
@@ -374,8 +377,37 @@ namespace WindowsFormsApp1
                 {
                     MessageBox.Show($"Exception: {ex.Message}");
                 }
-                ShowChessGUI(Username); //Authenticated so we can pass the username in
+                if (found)
+                {
+                    //dynamic jsonObject = JsonConvert.DeserializeObject(resultEntity);
+                    //Dictionary<string, string> dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonObject.ToString());
+                    BsonDocument bsonDocument = BsonSerializer.Deserialize<BsonDocument>(resultEntity);
+                    Dictionary<string, object> dict = ToDictionary(bsonDocument);
+                    if (dict["password"].ToString()==hashedPassword)
+                    {
+                        MessageBox.Show("Password correct.");
+                        ShowChessGUI(Username);
+                    } else
+                    {
+                        MessageBox.Show("Password incorrect.");
+                    }
+                }
             }
+        }
+        private string GetUser(string username)
+        {
+
+        }
+        private Dictionary<string, object> ToDictionary(BsonDocument document)
+        {
+            var dict = new Dictionary<string, object>();
+
+            foreach (var element in document)
+            {
+                dict[element.Name] = BsonTypeMapper.MapToDotNetValue(element.Value);
+            }
+
+            return dict;
         }
         private void ShowChessGUI (string username)
         {
