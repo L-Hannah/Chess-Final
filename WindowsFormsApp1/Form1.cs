@@ -340,6 +340,11 @@ namespace WindowsFormsApp1
                 //Login code
                 string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
                 string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
+                if (Username == "" || Password == "") 
+                {
+                    MessageBox.Show("Boxes cannot be blank");
+                    return;
+                }//Do not allow null values
                 string hashedPassword = ComputeSha256Hash(Password); //Hash password
                 bool found = false;
                 string resultEntity;
@@ -353,7 +358,17 @@ namespace WindowsFormsApp1
                 }
                 catch
                 {
-                    MessageBox.Show(resultEntity);
+                    try
+                    {
+                        var bsonArray = BsonSerializer.Deserialize<BsonDocument[]>(resultEntity);
+                        //Shouldn't have an array here but if there is, do nothing
+                        //MessageBox.Show("Bson array parsed");
+                        return;
+                    }
+                    catch
+                    {
+                        MessageBox.Show(resultEntity);
+                    }
                 }
                 if (found)
                 {
