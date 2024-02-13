@@ -14,9 +14,10 @@ namespace WindowsFormsApp1
     {
         public static async Task<string> Test(string addition)
         {
-            string baseURL = "https://www.chessdb.cn/cdb.php?action=querybest&board=";
+            string baseURL = "https://www.chessdb.cn/cdb.php?action=queryall&board=";
             string queryString = addition.Replace(" ", "%20");
             string url = baseURL + queryString;
+            //MessageBox.Show(url);
             using (HttpClient client = new HttpClient())
             {
                 try

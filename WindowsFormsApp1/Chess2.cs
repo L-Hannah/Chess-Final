@@ -246,6 +246,7 @@ namespace WindowsFormsApp1
         private async void StalemateCheck()
         {
             if (movecounter<10) return;
+            return; //Temporary measure
             string FEN = GetFEN();
             string dbResponse = await ChessDB.Test(FEN);
             MessageBox.Show(dbResponse);
