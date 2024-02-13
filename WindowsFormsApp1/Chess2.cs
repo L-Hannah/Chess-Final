@@ -45,6 +45,9 @@ namespace WindowsFormsApp1
         List<EnPassantData> EnPassantList = new List<EnPassantData>();
         bool EnPassanting = false;
         (int, int) EnPassantRemove;
+        bool GameOver = false;
+        string Winner = "";
+        bool Promoting = false;
         public Chess2(string uname)
         {
             username = uname;
@@ -53,21 +56,121 @@ namespace WindowsFormsApp1
 
         private void Chess2_Load(object sender, EventArgs e)
         {
-            colour = "white";
-            hypotheticalChess = new HypotheticalChess(colour, BKIC, WKIC);
-            PlayGame();
+            //Make new menu for game options
+            Menu = new MainMenu();
+            MenuItem item = new MenuItem("Game options");
+            Menu.MenuItems.Add(item);
+            //Add options to this menu
+            item.MenuItems.Add("Resign", new EventHandler(MenuEvent));
+            item.MenuItems.Add("Offer draw", new EventHandler(MenuEvent));
+            //Call playgame function
+            PlayGame("white");
         }
-        private void PlayGame()
+        private void MenuEvent(object sender, EventArgs e)
         {
+            //Don't allow actions when game over
+            if (GameOver || Promoting) return;
+            string tempOption = "";
+            if (sender is MenuItem menuItem)
+            {
+                tempOption = menuItem.Text;
+            }
+            DialogResult dialogResult;
+            switch (tempOption)
+            {
+                case "Resign":
+                    dialogResult = MessageBox.Show("Would you like to resign?","Resign",MessageBoxButtons.YesNo);
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        //Do code to resign
+                        GameOver = true;
+                        if (turn=="white") { Winner = "black"; } else { Winner = "white"; }
+                        GameDone();
+                    }
+                    else
+                    {
+                        //Do nothing
+                        break;
+                    }
+                    break;
+                case "Offer draw":
+                    dialogResult = MessageBox.Show($"{turn} has offered a draw. Do you accept?","Draw offer",MessageBoxButtons.YesNo);
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        //Do code to cause a draw
+                        GameOver = true;
+                        Winner = "";
+                        GameDone();
+                    }
+                    else if (dialogResult == DialogResult.No)
+                    {
+                        //Do nothing I guess
+                        break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        private void GameDone()
+        {
+            DialogResult dialogResult;
+            string message;
+            if (Winner=="") { message = "Game drawn. Play new?"; } 
+            else
+            {
+                message = $"{Winner} has won the game, play again?";
+            }
+            dialogResult = MessageBox.Show(message, "Game over",MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                PlayGame("white");
+            }
+        }
+        private void PlayGame(string colour)
+        {
+            ClearVariables();
             Controls.Clear();
             dictionaries = new Dictionaries(); //Initialize new dictionary
+            this.colour = colour;
+            hypotheticalChess = new HypotheticalChess(this.colour, BKIC, WKIC);
             Text = $"Chess Project - Signed in as {username}"; //Change title of window
-            Size = new Size(816, 838); //Set size
-            MaximumSize = new Size(816, 838); //Don't allow resizing
-            MinimumSize = new Size(816, 838); //Don't allow resizing
+            Size = new Size(816, 858); //Set size
+            MaximumSize = new Size(816, 858); //Don't allow resizing
+            MinimumSize = new Size(816, 858); //Don't allow resizing
             BackgroundImage = Resources.board; //Set background image to board
             InitializeDictionary();
             CreateButtons(); //Create the buttons
+        }
+        private void PromoteGUI()
+        {
+            Form settingsForm = new Form();
+            settingsForm.Show();
+        }
+        private void ClearVariables()
+        {
+            //Set all variables to their default functions from their initiation
+            currentlyselected = "";
+            turn = "white";
+            WKIC = false;
+            BKIC = false;
+            fullmoves = 0;
+            halfmoves = 0;
+            movecounter = 0;
+            zeroZeroRookMoved = false;
+            sevenZeroRookMoved = false;
+            zeroSevenRookMoved = false;
+            sevenSevenRookMoved = false;
+            whiteKingMoved = false;
+            blackKingMoved = false;
+            castling = false;
+            rookOldCoords="";
+            rookNewCoords="";
+            EnPassantList = new List<EnPassantData>();
+            EnPassanting = false;
+            EnPassantRemove = (-1,-1);
+            GameOver = false;
+            Winner = "";
         }
         private void InitializeDictionary()
         {
@@ -159,6 +262,8 @@ namespace WindowsFormsApp1
         }
         private void SquareButton_Click(object sender, EventArgs e)
         {
+            //Don't allow button press if game over
+            if (GameOver || Promoting) { return; }
             Button btn = (Button)sender; //Turn sender into button object
             string coordstring = btn.Name;//Get coordstring using the name of the button
             int i = (int)char.GetNumericValue(coordstring[0]); //Get the horizontal value using first char
