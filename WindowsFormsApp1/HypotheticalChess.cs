@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Remoting;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
@@ -24,6 +25,10 @@ namespace WindowsFormsApp1
         }
         public bool DetermineValid(string coordstring, string curselected, Dictionary<(int,int),string> pastBoard)
         {
+            if (coordstring=="")
+            {
+                MessageBox.Show($"Somehow coordstring empty? coordstring: {coordstring}, curselected:{curselected}");
+            }
             //This function should determine that the move done will work
             //If the move is valid, this will be called. The move will be done and if the check function returns true, it won't be good.
             //The check function does not actually return anything but the depending on whose move it is, we can check if the king remains in check
@@ -102,7 +107,7 @@ namespace WindowsFormsApp1
                     else if (WKIC_coord != "")
                     {
                         //If white king in check exists
-                        if (Viable(WK_coord, currentCoord, false, "") && dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord)) != "white")
+                        if (Viable(WKIC_coord, currentCoord, false, "") && dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord)) != "white")
                         {
                             //Piece can take king and isn't of the same colour
                             WKIC = true;

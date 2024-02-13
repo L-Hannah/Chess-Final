@@ -142,9 +142,56 @@ namespace WindowsFormsApp1
             InitializeDictionary();
             CreateButtons(); //Create the buttons
         }
-        private void PromoteGUI()
+        private void PromoteGUI(int i, int j, string colour)
         {
-            Form settingsForm = new Form();
+            Point screenCoords = ((Button)Controls.Find(i.ToString() + j.ToString(), true)[0]).PointToScreen(Point.Empty);
+            screenCoords.X -= 20;
+            Promoting = true;
+            Form settingsForm = new Form
+            {
+                StartPosition = FormStartPosition.Manual,
+                Location = screenCoords,
+                Size = new Size(100, 450)
+            };
+            Button QueenButton = new Button()
+            {
+                Name = "QueenButton",
+                Size = new Size(100, 100),
+                Location = new Point(10,20)
+            };
+            Button KnightButton = new Button()
+            {
+                Name = "KnightButton",
+                Size = new Size(100, 100),
+            };
+            Button RookButton = new Button()
+            {
+                Name = "RookButton",
+                Size = new Size(100, 100),
+            };
+            Button BishopButton = new Button()
+            {
+                Name = "BishopButton",
+                Size = new Size(100, 100)
+            };
+            if (colour=="white")
+            {
+                QueenButton.Image = Resources.WQ;
+                KnightButton.Image = Resources.WH;
+                RookButton.Image = Resources.WR;
+                BishopButton.Image = Resources.WB;
+            } 
+            else
+            {
+                QueenButton.Image = Resources.BQ;
+                KnightButton.Image = Resources.BH;
+                RookButton.Image = Resources.BR;
+                BishopButton.Image = Resources.BB;
+            }
+            settingsForm.Controls.Add(QueenButton);
+            settingsForm.Controls.Add(KnightButton);
+            settingsForm.Controls.Add(RookButton);
+            settingsForm.Controls.Add(KnightButton);
             settingsForm.Show();
         }
         private void ClearVariables()
@@ -292,6 +339,8 @@ namespace WindowsFormsApp1
                     bool moveValid = Viable(coordstring, currentlyselected,false,"");
                     if (moveValid)
                     {
+                        if (coordstring=="") MessageBox.Show("Somehow coordstring is empty at line 342 (chess2.cs)");
+                        if (currentlyselected == "") MessageBox.Show("Somehow currentlyselected is empty at line 343 (chess2.cs)");
                         bool determineValid = hypotheticalChess.DetermineValid(coordstring, currentlyselected, dictionaries.Board);
                         if (!determineValid)
                         {
@@ -396,6 +445,10 @@ namespace WindowsFormsApp1
                 dictionaries.SetBoard(EnPassantRemove.Item1, EnPassantRemove.Item2, "");
                 EnPassanting = false;
             }
+            if (currentlySelectedPiece=="WP"&&colour=="white"&&j==0) { PromoteGUI(i, j,"white"); }
+            else if (currentlySelectedPiece=="WP"&&colour=="black"&&j==7) {  PromoteGUI(i, j,"white"); }
+            else if (currentlySelectedPiece=="BP"&&colour=="white"&&j==7) { PromoteGUI(i, j,"black"); }
+            else if (currentlySelectedPiece=="BP"&&colour=="black"&&j==0) { PromoteGUI(i, j,"black"); }
             Check(); //See if either king is in check
             SetImages();
             ClearUnselected(); //Clear image backgrounds
@@ -1148,7 +1201,7 @@ namespace WindowsFormsApp1
                     } else if (WKIC_coord!="")
                     {
                         //If white king in check exists
-                        if (Viable(WK_coord, currentCoord, false, "") && dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord)) != "white")
+                        if (Viable(WKIC_coord, currentCoord, false, "") && dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord)) != "white")
                         {
                             //Piece can take king and isn't of the same colour
                             WKIC = true;

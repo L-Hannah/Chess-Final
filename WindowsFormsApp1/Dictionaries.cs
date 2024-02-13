@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace WindowsFormsApp1
 {
@@ -50,6 +51,10 @@ namespace WindowsFormsApp1
         }
         public string GetPieceWithCoordString(string coordstring)
         {
+            if (coordstring=="")
+            {
+                MessageBox.Show("Somehow coordstring is now empty??");
+            }
             int i = (int)char.GetNumericValue(coordstring[0]); //Get numeric value of first character and set as i
             int j = (int)char.GetNumericValue(coordstring[1]); //Get numeric value of second character and set as i
             return GetBoard(i, j); //Return piece abbrevation from the coordinate
