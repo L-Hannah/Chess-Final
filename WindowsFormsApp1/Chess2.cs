@@ -23,6 +23,9 @@ namespace WindowsFormsApp1
         string turn = "white"; //Holds current turn, always starts with white
         bool WKIC = false; //White king in check, starts as false
         bool BKIC = false; //Black king in check, starts as false
+        int fullmoves = 0;
+        int halfmoves = 0;
+        int movecounter = 0;
         Dictionaries dictionaries;
         HypotheticalChess hypotheticalChess;
         //These two will be for whichever colour is at the top
@@ -196,6 +199,7 @@ namespace WindowsFormsApp1
                         {
                             Move(i, j);
                             if (turn == "white") { turn = "black"; } else { turn = "white"; }
+                            MessageBox.Show(GetFEN());
                         }
                     } else
                     {
@@ -226,6 +230,7 @@ namespace WindowsFormsApp1
                         //Move does not put user into check, it can be done
                         Move(i, j);
                         if (turn == "white") { turn = "black"; } else { turn = "white"; }
+                        MessageBox.Show(GetFEN());
                     }
                 } else
                 {
@@ -251,6 +256,7 @@ namespace WindowsFormsApp1
         }
         private void Move(int i, int j)
         {
+            string pieceAtCoord = dictionaries.GetBoard(i, j);
             string currentlySelectedPiece = dictionaries.GetPieceWithCoordString(currentlyselected);
             //Set piece at coord to currently selected piece
             dictionaries.SetBoard(i, j, currentlySelectedPiece);
@@ -280,15 +286,20 @@ namespace WindowsFormsApp1
             Check(); //See if either king is in check
             SetImages();
             ClearUnselected(); //Clear image backgrounds
+            if (pieceAtCoord=="") { halfmoves++; } else { halfmoves = 0; }
             if (currentlySelectedPiece=="WK") { whiteKingMoved= true; }
-            if (currentlySelectedPiece=="BK") { blackKingMoved= true; }
-            if (currentlySelectedPiece == "WR" || currentlySelectedPiece == "BR")
+            else if (currentlySelectedPiece=="BK") { blackKingMoved= true; }
+            else if (currentlySelectedPiece == "WR" || currentlySelectedPiece == "BR")
             {
                 if (currentlyi == 0 && currentlyj == 7) { zeroSevenRookMoved = true; }
                 else if (currentlyi == 7 && currentlyj == 7) { sevenSevenRookMoved = true; }
                 else if (currentlyi == 0 && currentlyj == 0) { zeroZeroRookMoved = true; }
                 else if (currentlyi == 7 && currentlyj == 0) {  sevenZeroRookMoved = true; }
             }
+            else if (currentlySelectedPiece == "WP" || currentlySelectedPiece=="BP")
+            {
+                halfmoves = 0;
+            } 
             //Iterate through the en passant list and add one to the movecount
             foreach (var data in EnPassantList)
             {
@@ -301,6 +312,78 @@ namespace WindowsFormsApp1
                 {
                     EnPassantList.RemoveAt(x);
                 }
+            }
+            if (turn=="black")
+            {
+                fullmoves++;
+            }
+            movecounter++;
+        }
+        private string GetEnPassantFEN()
+        {
+            if (EnPassantList.Count==0)
+            {
+                return "-";
+            } 
+            else
+            {
+                string normalCoords = GetNormalCoords(EnPassantList[0].Empty.Item1, EnPassantList[0].Empty.Item2);
+                return normalCoords;
+            }
+        }
+        private string GetNormalCoords(int i,int j)
+        {
+            List<string> rows = new List<string>
+                {
+                    "a","b","c","d","e","f","g","h"
+                };
+            List<string> cols;
+            if (colour=="white")
+            {
+                cols = new List<string>
+                {
+                    "8","7","6","5","4","3","2","1"
+                };
+            } 
+            else
+            {
+                cols = new List<string>
+                {
+                    "1","2","3","4","5","6","7","8"
+                };
+            }
+            return rows[i] + cols[j];
+        }
+        static string GetFENPiece(string piece)
+        {
+            switch (piece)
+            {
+                case "WK":
+                    return "K";
+                case "BK":
+                    return "k";
+                case "WH":
+                    return "N";
+                case "BH":
+                    return "n";
+                case "WP":
+                    return "P";
+                case "BP":
+                    return "p";
+                case "WB":
+                    return "B";
+                case "BB":
+                    return "b";
+                case "WR":
+                    return "R";
+                case "BR":
+                    return "r";
+                case "WQ":
+                    return "Q";
+                case "BQ":
+                    return "q";
+                default:
+                    return ""; // Empty square
             }
         }
         private bool CheckForCastle(string kingColour, string direction)
@@ -480,6 +563,83 @@ namespace WindowsFormsApp1
                     }
                 }
             }
+        }
+        private string GetCastlingAvailability()
+        {
+            string castlingAvailability = "";
+            if (colour == "white")
+            {
+                if (!whiteKingMoved)
+                {
+                    if (!sevenSevenRookMoved) { castlingAvailability += "K"; }
+                    if (!zeroSevenRookMoved) { castlingAvailability += "Q"; }
+                }
+                if (!blackKingMoved)
+                {
+                    if (!sevenZeroRookMoved) { castlingAvailability += "k"; }
+                    if (!zeroZeroRookMoved) { castlingAvailability += "q"; }
+                }
+            }
+            else if (colour == "black")
+            {
+                if (!whiteKingMoved)
+                {
+                    if (!zeroZeroRookMoved) { castlingAvailability += "K"; }
+                    if (!sevenZeroRookMoved) { castlingAvailability += "Q"; }
+                }
+                if (!blackKingMoved)
+                {
+                    if (!zeroSevenRookMoved) { castlingAvailability += "k"; }
+                    if (sevenSevenRookMoved) { castlingAvailability += "q"; }
+                }
+            }
+            if (castlingAvailability.Length==0)
+            {
+                return "-";
+            }
+            return castlingAvailability;
+        }
+        private string GetFEN()
+        {
+            string fen = "";
+            int emptySquareCount = 0;
+            for (int col = 0; col < 8; col++)
+            {
+                for (int row = 0; row < 8; row++)
+                {
+                    var position = (row,col);
+                    string piece = dictionaries.Board[position];
+                    if (piece=="")
+                    {
+                        emptySquareCount++;
+                    } 
+                    else
+                    {
+                        if (emptySquareCount>0)
+                        {
+                            fen += emptySquareCount.ToString();
+                            emptySquareCount = 0;
+                        }
+                        fen += GetFENPiece(piece);
+                    }
+                }
+                if (emptySquareCount>0)
+                {
+                    fen += emptySquareCount.ToString();
+                    emptySquareCount = 0;
+                }
+                if (col<7)
+                {
+                    fen += "/";
+                }
+            }
+            fen += " ";
+            fen += turn.Substring(0,1) + " ";
+            fen += GetCastlingAvailability() + " ";
+            fen += GetEnPassantFEN() + " ";
+            fen += halfmoves.ToString() + " ";
+            fen += fullmoves.ToString() + " ";
+            return fen;
         }
         private void SetButtonImage(Button button, string coordstring)
         {
