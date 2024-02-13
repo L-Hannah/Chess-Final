@@ -199,7 +199,7 @@ namespace WindowsFormsApp1
                         {
                             Move(i, j);
                             if (turn == "white") { turn = "black"; } else { turn = "white"; }
-                            MessageBox.Show(GetFEN());
+                            StalemateCheck();
                         }
                     } else
                     {
@@ -230,7 +230,7 @@ namespace WindowsFormsApp1
                         //Move does not put user into check, it can be done
                         Move(i, j);
                         if (turn == "white") { turn = "black"; } else { turn = "white"; }
-                        MessageBox.Show(GetFEN());
+                        StalemateCheck();
                     }
                 } else
                 {
@@ -242,6 +242,13 @@ namespace WindowsFormsApp1
                 }
             }
             ClearUnselected();
+        }
+        private async void StalemateCheck()
+        {
+            if (movecounter<10) return;
+            string FEN = GetFEN();
+            string dbResponse = await ChessDB.Test(FEN);
+            MessageBox.Show(dbResponse);
         }
         private void SetImages()
         {

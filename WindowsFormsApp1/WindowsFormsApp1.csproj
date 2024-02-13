@@ -71,6 +71,7 @@
     <Compile Include="Chess2.Designer.cs">
       <DependentUpon>Chess2.cs</DependentUpon>
     </Compile>
+    <Compile Include="ChessDB.cs" />
     <Compile Include="Dictionaries.cs" />
     <Compile Include="EnPassantData.cs" />
     <Compile Include="Form1.cs">
