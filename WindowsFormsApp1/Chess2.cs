@@ -59,13 +59,93 @@ namespace WindowsFormsApp1
             Location = new Point(100, 100);
             //Make new menu for game options
             Menu = new MainMenu();
-            MenuItem item = new MenuItem("Game options");
-            Menu.MenuItems.Add(item);
+            MenuItem item1 = new MenuItem("Pages");
+            item1.MenuItems.Add("Play", new EventHandler(ChangePage));
+            item1.MenuItems.Add("Support", new EventHandler(ChangePage));
+            MenuItem item2 = new MenuItem("Game");
+            Menu.MenuItems.Add(item1);
+            Menu.MenuItems.Add(item2);
             //Add options to this menu
-            item.MenuItems.Add("Resign", new EventHandler(MenuEvent));
-            item.MenuItems.Add("Offer draw", new EventHandler(MenuEvent));
+            item2.MenuItems.Add("Resign", new EventHandler(MenuEvent));
+            item2.MenuItems.Add("Offer draw", new EventHandler(MenuEvent));
             //Call playgame function
             PlayGame("white");
+        }
+        private void ChangePage(object sender, EventArgs e)
+        {
+            string tempOption = "";
+            if (sender is MenuItem menuItem)
+            {
+                tempOption = menuItem.Text;
+            }
+            if (tempOption=="Play")
+            {
+                PlayGame("white");
+            } 
+            else if (tempOption=="Support")
+            {
+                Controls.Clear();
+                SupportPage();
+            }
+        }
+        private void SupportPage()
+        {
+            //Change GUI
+            BackgroundImage = null;
+            MaximumSize = new Size(800, 600);
+            MinimumSize = new Size(800, 600);
+            Size = new Size(800, 600);
+
+            // Add title label
+            Label titleLabel = new Label();
+            titleLabel.Text = "Support Page";
+            titleLabel.Font = new Font("Arial", 24, FontStyle.Bold);
+            titleLabel.ForeColor = Color.DarkBlue;
+            titleLabel.AutoSize = true;
+            titleLabel.Location = new Point(10, 10);
+            Controls.Add(titleLabel);
+
+            // Add support text
+            Label supportLabel = new Label();
+            supportLabel.Text = "Welcome to our support page. Please choose from the following options:";
+            supportLabel.Font = new Font("Arial", 12, FontStyle.Regular);
+            supportLabel.ForeColor = Color.DarkSlateGray;
+            supportLabel.AutoSize = true;
+            supportLabel.Location = new Point(10, 50);
+            Controls.Add(supportLabel);
+
+            // Add buttons for different support options
+            Button faqButton = new Button();
+            faqButton.Text = "FAQ";
+            faqButton.BackColor = Color.SteelBlue;
+            faqButton.ForeColor = Color.White;
+            faqButton.FlatStyle = FlatStyle.Flat;
+            faqButton.Font = new Font("Arial", 12, FontStyle.Bold);
+            faqButton.Size = new Size(200, 50);
+            faqButton.Location = new Point(10, 100);
+            Controls.Add(faqButton);
+
+            Button contactButton = new Button();
+            contactButton.Text = "Contact Us";
+            contactButton.BackColor = Color.OrangeRed;
+            contactButton.ForeColor = Color.White;
+            contactButton.FlatStyle = FlatStyle.Flat;
+            contactButton.Font = new Font("Arial", 12, FontStyle.Bold);
+            contactButton.Size = new Size(200, 50);
+            contactButton.Location = new Point(10, 170);
+            Controls.Add(contactButton);
+
+            // Subscribe to button events
+            faqButton.Click += FAQButton_Click;
+            contactButton.Click += ContactButton_Click;
+        }
+        private void FAQButton_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Show FAQ.");
+        }
+        private void ContactButton_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Please contact me at s221363@greenhead.ac.uk");
         }
         private void MenuEvent(object sender, EventArgs e)
         {
