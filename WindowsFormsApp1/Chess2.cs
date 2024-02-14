@@ -56,6 +56,7 @@ namespace WindowsFormsApp1
 
         private void Chess2_Load(object sender, EventArgs e)
         {
+            Location = new Point(100, 100);
             //Make new menu for game options
             Menu = new MainMenu();
             MenuItem item = new MenuItem("Game options");
@@ -146,6 +147,7 @@ namespace WindowsFormsApp1
         {
             Point screenCoords = ((Button)Controls.Find(i.ToString() + j.ToString(), true)[0]).PointToScreen(Point.Empty);
             screenCoords.X -= 20;
+            if (screenCoords.Y > 1080-500) { screenCoords.Y = 1080 - 500; }
             Promoting = true;
             Form settingsForm = new Form
             {
@@ -155,24 +157,27 @@ namespace WindowsFormsApp1
             };
             Button QueenButton = new Button()
             {
-                Name = "QueenButton",
+                Name = colour.Substring(0,1).ToUpper()+"Q"+i.ToString()+j.ToString(),
                 Size = new Size(100, 100),
-                Location = new Point(10,20)
+                Location = new Point(10,5)
             };
             Button KnightButton = new Button()
             {
-                Name = "KnightButton",
+                Name = colour.Substring(0, 1).ToUpper() + "H" + i.ToString() + j.ToString(),
                 Size = new Size(100, 100),
+                Location = new Point(10,105)
             };
             Button RookButton = new Button()
             {
-                Name = "RookButton",
+                Name = colour.Substring(0, 1).ToUpper() + "R" + i.ToString() + j.ToString(),
                 Size = new Size(100, 100),
+                Location = new Point(10,205)
             };
             Button BishopButton = new Button()
             {
-                Name = "BishopButton",
-                Size = new Size(100, 100)
+                Name = colour.Substring(0, 1).ToUpper() + "B" + i.ToString() + j.ToString(),
+                Size = new Size(100, 100),
+                Location = new Point(10, 305)
             };
             if (colour=="white")
             {
@@ -191,8 +196,40 @@ namespace WindowsFormsApp1
             settingsForm.Controls.Add(QueenButton);
             settingsForm.Controls.Add(KnightButton);
             settingsForm.Controls.Add(RookButton);
-            settingsForm.Controls.Add(KnightButton);
-            settingsForm.Show();
+            settingsForm.Controls.Add(BishopButton);
+            QueenButton.Click += new EventHandler(Promote);
+            KnightButton.Click += new EventHandler(Promote);
+            RookButton.Click += new EventHandler(Promote);
+            BishopButton.Click += new EventHandler(Promote);
+            settingsForm.ShowDialog();
+        }
+        private void Promote(object sender, EventArgs e)
+        {
+            //Set piece to null initially so all code endpoints can access it
+            string Piece = "";
+            string Coordstring = "";
+            //Check if sender is button as needed
+            if (sender is Button btn)
+            {
+                //Get name as string
+                string tempText = btn.Name;
+                //Get piece from first two letters of name
+                Piece = tempText.Substring(0, 2);
+                //Get coordinate string from last two letters of name
+                Coordstring = tempText.Substring(2, 2);
+            }
+            //Double check that neither piece nor coordinates are empty
+            if (Piece==""||Coordstring=="") { MessageBox.Show("PROMOTING NOTHING??"); return; }
+            //Get coordinates as integers
+            int i = (int)char.GetNumericValue(Coordstring[0]);
+            int j = (int)char.GetNumericValue(Coordstring[1]);
+            //Set the piece using the coordinates
+            dictionaries.SetBoard(i, j, Piece);
+            //Set promoting to false so that the game can continue
+            Promoting = false;
+            //Close promotion GUI
+            Form form = (Form)((Button)sender).Parent;
+            form.Close();
         }
         private void ClearVariables()
         {
