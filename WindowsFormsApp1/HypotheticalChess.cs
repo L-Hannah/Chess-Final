@@ -1,0 +1,466 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Runtime.Remoting;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace WindowsFormsApp1
+{
+    internal class HypotheticalChess
+    {
+        Dictionaries dictionaries;
+        string colour;
+        bool WKIC;
+        bool BKIC;
+        public HypotheticalChess(string colour, bool BKIC, bool WKIC)
+        {
+            //New instance of dictionaries object
+            //dictionaries = new Dictionaries();
+            this.colour = colour;
+            this.BKIC = BKIC;
+            this.WKIC = WKIC;
+        }
+        public bool DetermineValid(string coordstring, string curselected, Dictionary<(int,int),string> pastBoard)
+        {
+            if (coordstring=="")
+            {
+                MessageBox.Show($"Somehow coordstring empty? coordstring: {coordstring}, curselected:{curselected}");
+            }
+            //This function should determine that the move done will work
+            //If the move is valid, this will be called. The move will be done and if the check function returns true, it won't be good.
+            //The check function does not actually return anything but the depending on whose move it is, we can check if the king remains in check
+            dictionaries = new Dictionaries();
+            CopyDictionary(pastBoard);
+            int i = (int)char.GetNumericValue(coordstring[0]);
+            int j = (int)char.GetNumericValue(coordstring[1]);
+            string currentColour = dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(curselected));
+            Move(i, j, curselected);
+            if (Check(currentColour)) { return false; } else { return true; }
+        }
+        private void CopyDictionary(Dictionary<(int,int),string> pastBoard)
+        {
+            //Create new instance of board temporarily
+            Dictionary<(int,int),string> tempBoard = new Dictionary<(int,int),string>();
+            //Nested for loop to iterate through the board and copy it
+            for (int i=0; i<8; i++)
+            {
+                for (int j=0; j<8; j++)
+                {
+                    //Add function
+                    tempBoard.Add((i, j), pastBoard[(i,j)]);
+                }
+            }
+            //Set board within the dictionaries class to the newly copied one
+            dictionaries.Board = tempBoard;
+            return;
+        }
+        private bool Move(int i, int j, string curselected)
+        {
+            //Set piece at coord to currently selected piece
+            dictionaries.SetBoard(i, j, dictionaries.GetPieceWithCoordString(curselected));
+            //Get current coords
+            int currentlyi = (int)char.GetNumericValue(curselected[0]);
+            int currentlyj = (int)char.GetNumericValue(curselected[1]);
+            curselected = ""; //Set currentlyselected to nothing
+            dictionaries.SetBoard(currentlyi, currentlyj, ""); //Set old pos to nothing as piece has moved
+            return false;
+        }
+        private bool Check(string currentColour)
+        {
+            //Ensure current colour's king is not in check
+            //Get king coords
+            string WK_coord = dictionaries.FindIndex("WK");
+            string WKIC_coord = dictionaries.FindIndex("WKIC");
+            string BK_coord = dictionaries.FindIndex("BK");
+            string BKIC_coord = dictionaries.FindIndex("BKIC");
+            //The things below are not meant to return false but also they shouldnt happen, itll be fine
+            if (WK_coord == "" && WKIC_coord == "")
+            {
+                //No white king for some reason
+                return false;
+            }
+            if (BK_coord == "" && BKIC_coord == "")
+            {
+                //No black king for some reason
+                return false;
+            }
+            int whitekingcounter = 0;
+            int blackkingcounter = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    string currentCoord = i.ToString() + j.ToString();
+                    if (WK_coord != "")
+                    {
+                        //If white king exists, not in check
+                        if (Viable(WK_coord, currentCoord, false, "") && dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord)) != "white")
+                        {
+                            //Piece can take king and isn't of the same colour
+                            WKIC = true;
+                            whitekingcounter++;
+                        }
+                    }
+                    else if (WKIC_coord != "")
+                    {
+                        //If white king in check exists
+                        if (Viable(WKIC_coord, currentCoord, false, "") && dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord)) != "white")
+                        {
+                            //Piece can take king and isn't of the same colour
+                            WKIC = true;
+                            whitekingcounter++;
+                        }
+                    }
+                    if (BK_coord != "")
+                    {
+                        //If black king exists but not in check
+                        if (Viable(BK_coord, currentCoord, false, "") && dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord)) != "black")
+                        {
+                            //Piece can take king and isnt of same colour
+                            BKIC = true;
+                            blackkingcounter++;
+                        }
+                    }
+                    else if (BKIC_coord != "")
+                    {
+                        //If black king exists but in check
+                        if (Viable(BKIC_coord, currentCoord, false, "") && dictionaries.GetPieceColour(dictionaries.GetPieceWithCoordString(currentCoord)) != "black")
+                        {
+                            //Piece can take king and isnt of same colour
+                            BKIC = true;
+                            blackkingcounter++;
+                        }
+                    }
+                }
+            }
+            if (whitekingcounter == 0)
+            {
+                //White king not in check, set variable to false
+                WKIC = false;
+                if (WKIC_coord != "")
+                {
+                    //Need to get coordinates before using set board
+                    int i = (int)char.GetNumericValue(WKIC_coord[0]);
+                    int j = (int)char.GetNumericValue(WKIC_coord[1]);
+                    //Set back to "WK" value as no longer in check
+                    dictionaries.SetBoard(i, j, "WK");
+                }
+            }
+            if (blackkingcounter == 0)
+            {
+                BKIC = false;
+                if (BKIC_coord != "")
+                {
+                    //Need to get the coordinates before using set board
+                    int i = (int)char.GetNumericValue(BKIC_coord[0]);
+                    int j = (int)char.GetNumericValue(BKIC_coord[1]);
+                    //Set back to "BK" value as no longer in check
+                    dictionaries.SetBoard(i, j, "BK");
+                }
+            }
+            if (WKIC)
+            {
+                if (WK_coord != "")
+                {
+                    //Need to get the coordinates before using set board
+                    int i = (int)char.GetNumericValue(WK_coord[0]);
+                    int j = (int)char.GetNumericValue(WK_coord[1]);
+                    //Set to "WKIC" value as now in check
+                    dictionaries.SetBoard(i, j, "WKIC");
+                }
+            }
+            if (BKIC)
+            {
+                if (BK_coord != "")
+                {
+                    //Need to get the coordinates before using set board
+                    int i = (int)char.GetNumericValue(BK_coord[0]);
+                    int j = (int)char.GetNumericValue(BK_coord[1]);
+                    //Set to "BKIC" value as now in check
+                    dictionaries.SetBoard(i, j, "BKIC");
+                }
+            }
+            if (currentColour=="white")
+            {
+                if (WKIC) { return true; } else { return false; }
+            }
+            if (currentColour=="black")
+            {
+                if (BKIC) { return true; } else { return false;}
+            }
+            return false;
+        }
+        //THIS ENTIRE FUNCTION WAS COPIED FROM THE OTHER FILE DO NOT LOOK HERE
+        private bool Viable(string coordstring, string curselected, bool overRide, string newabbrev)
+        {
+            string pieceabbrev = dictionaries.GetPieceWithCoordString(coordstring);
+            string curabbrev = dictionaries.GetPieceWithCoordString(curselected);
+            if (overRide) { curabbrev = newabbrev; }
+            string curcolour = dictionaries.GetPieceColour(curabbrev);
+            int i = (int)char.GetNumericValue(coordstring[0]); //Get horizontal of piece to try take
+            int j = (int)char.GetNumericValue(coordstring[1]); //Get vertical of piece to try take
+            int curi = (int)char.GetNumericValue(curselected[0]); //Get horizontal of current
+            int curj = (int)char.GetNumericValue(curselected[1]); //Get vertical of current
+            (int i, int j) attemptedmove = (i - curi, j - curj); //Make tuple of the attempted move
+            if (curabbrev == "WH" || curabbrev == "BH")
+            {
+                int idiff = Math.Abs(i - curi);
+                int jdiff = Math.Abs(j - curj);
+                if (idiff == 2 && jdiff == 1 || idiff == 1 && jdiff == 2) { return true; }
+                else { return false; }
+            }
+            else if (curabbrev == "WP" || curabbrev == "BP")
+            {
+                int idiff = i - curi; //Get horizontal difference
+                int jdiff = j - curj; //Get vertical difference
+                if (pieceabbrev == "") //Not attempting to take a piece
+                {
+                    if (idiff != 0) { return false; } //Can't move horizontally when not trying to take a piece.
+                    if (curcolour != colour)
+                    {
+                        if (jdiff == 1) //Has to move down
+                        {
+                            return true;
+                        }
+                        if (jdiff == 2 && curj == 1) //Trying starting move
+                        {
+                            if (dictionaries.GetBoard(curi, curj + 1) == "" && dictionaries.GetBoard(curi, curj + 2) == "")
+                            {
+                                return true; //Move is valid as no pieces in the way.
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (jdiff == -1) //Has to move up
+                        {
+                            return true;
+                        }
+                        if (jdiff == -2 && curj == 6) //Trying starting move
+                        {
+                            if (dictionaries.GetBoard(curi, curj - 1) == "" && dictionaries.GetBoard(curi, curj - 2) == "")
+                            {
+                                return true; //Move is valid as no pieces in the way.
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    //Attempting to take a piece
+                    if (Math.Abs(idiff) != 1) { return false; } //Can't take at a diff other than 1
+                    if (curcolour != colour)//Not same colour as user
+                    {
+                        if (jdiff == 1) //Moving down as opposing side
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        if (jdiff == -1) //Moving up as this is the user's side
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            else if (curabbrev == "BR" || curabbrev == "WR")
+            {
+                List<(int, int)> possibleMoves = new List<(int, int)>(); //New list for possible moves
+                //Each max will add 1, as the for loop in C# isn't inclusive and must iterate enough times.
+                int upwardsMax = Math.Abs(0 - curj) + 1; //Get upwards max from bound
+                int downwardsMax = Math.Abs(7 - curj) + 1; //Get downwards max from bound
+                int leftMax = Math.Abs(0 - curi) + 1; //Get left max from bound
+                int rightMax = Math.Abs(7 - curi) + 1; //Get right max from bound
+                for (int x = 1; x < upwardsMax; x++)
+                {
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi, curj - x));
+                    if (tempPieceColour != curcolour)//Either blank or enemy
+                    {
+                        possibleMoves.Add((0, -x)); //Add as possible move
+                        if (tempPieceColour != "") { break; } //If Enemy, this is last possible move
+                    }
+                    else
+                    {
+                        //Can't collide with own colour
+                        break;
+                    }
+                }
+                for (int x = 1; x < downwardsMax; x++)
+                {
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi, curj + x));
+                    if (tempPieceColour != curcolour)//Either blank or enemy
+                    {
+                        possibleMoves.Add((0, +x)); //Add as possible move
+                        if (tempPieceColour != "") { break; } //If Enemy, this is last possible move
+                    }
+                    else
+                    {
+                        //Can't collide with own colour
+                        break;
+                    }
+                }
+                for (int x = 1; x < leftMax; x++)
+                {
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi - x, curj));
+                    if (tempPieceColour != curcolour)//Either blank or enemy
+                    {
+                        possibleMoves.Add((-x, 0)); //Add as possible move
+                        if (tempPieceColour != "") { break; } //If enemy, this is last possible move
+                    }
+                    else
+                    {
+                        //Can't collide with own colour
+                        break;
+                    }
+                }
+                for (int x = 1; x < rightMax; x++)
+                {
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi + x, curj));
+                    if (tempPieceColour != curcolour)//Either blank or enemy
+                    {
+                        possibleMoves.Add((x, 0)); //Add as possible move
+                        if (tempPieceColour != "") { break; } //If enemy, this is last possible move
+                    }
+                    else
+                    {
+                        //Can't collide with own colour
+                        break;
+                    }
+                }
+                if (possibleMoves.Contains(attemptedmove))
+                {
+                    //Move is possible
+                    return true;
+                }
+                else
+                {
+                    //Move is not possible
+                    return false;
+                }
+            }
+            else if (curabbrev == "BB" || curabbrev == "WB")
+            {
+                //Difference in both x and y axis must be equal
+                if (Math.Abs(i - curi) != Math.Abs(j - curj)) { return false; }
+                List<(int, int)> possibleMoves = new List<(int, int)>(); //New list for possible moves
+                //Each max will add 1, as the for loop in C# isn't inclusive and must iterate enough times.
+                int upwardsMax = Math.Abs(0 - curj) + 1; //Get upwards max from bound
+                int downwardsMax = Math.Abs(7 - curj) + 1; //Get downwards max from bound
+                int leftMax = Math.Abs(0 - curi) + 1; //Get left max from bound
+                int rightMax = Math.Abs(7 - curi) + 1; //Get right max from bound
+                for (int x = 1; x < leftMax; x++)
+                {
+                    //Left and down
+                    if (x == downwardsMax) { break; } //Can't go outside of board
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi - x, curj + x));
+                    if (tempPieceColour != curcolour)
+                    {
+                        possibleMoves.Add((-x, x)); //Moves by same value in each direction but left so -x for horizontal
+                        if (tempPieceColour != "") { break; }
+                    }
+                    else
+                    {
+                        //Same colour, cannot collide with this
+                        break;
+                    }
+                }
+                for (int x = 1; x < leftMax; x++)
+                {
+                    //Left and up
+                    if (x == upwardsMax) { break; } //Can't go outside of board
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi - x, curj - x));
+                    if (tempPieceColour != curcolour)
+                    {
+                        possibleMoves.Add((-x, -x)); //Moves by same value in each direction but left so -x for horizontal
+                        if (tempPieceColour != "") { break; }
+                    }
+                    else
+                    {
+                        //Same colour, cannot collide with this
+                        break;
+                    }
+                }
+                for (int x = 1; x < rightMax; x++)
+                {
+                    //Right and down
+                    if (x == downwardsMax) { break; }//Can't go outside of board
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi + x, curj + x));
+                    if (tempPieceColour != curcolour)
+                    {
+                        possibleMoves.Add((x, x)); //Moves by same value in each direction
+                        if (tempPieceColour != "") { break; };
+                    }
+                    else
+                    {
+                        //Same colour, cannot collide with this
+                        break;
+                    }
+                }
+                for (int x = 1; x < rightMax; x++)
+                {
+                    //Right and up
+                    if (x == upwardsMax) { break; }//Can't go outside of board
+                    //Get piece colour as variable
+                    string tempPieceColour = dictionaries.GetPieceColour(dictionaries.GetBoard(curi + x, curj - x));
+                    if (tempPieceColour != curcolour)
+                    {
+                        possibleMoves.Add((x, -x)); //Moves by same value in each direction
+                        if (tempPieceColour != "") { break; };
+                    }
+                    else
+                    {
+                        //Same colour, cannot collide with this
+                        break;
+                    }
+                }
+                //If move possible, return true. If not, return false
+                if (possibleMoves.Contains(attemptedmove)) { return true; } else { return false; }
+            }
+            else if (curabbrev == "WQ" || curabbrev == "BQ")
+            {
+                string tempColour = dictionaries.GetPieceColour(curabbrev);
+                if (tempColour == "white")
+                {
+                    if (Viable(coordstring, curselected, true, "WB") || Viable(coordstring, curselected, true, "WR"))
+                    {
+                        //Move is valid for either white bishop or white rook
+                        return true;
+                    }
+                }
+                else
+                {
+                    if (Viable(coordstring, curselected, true, "BB") || Viable(coordstring, curselected, true, "BR"))
+                    {
+                        //Move is valid for either black bishop or black rook
+                        return true;
+                    }
+                }
+            }
+            else if (curabbrev == "WKIC" || curabbrev == "BKIC" || curabbrev == "WK" || curabbrev == "BK")
+            {
+                //Can only move by a maximum of 1 in each direction, abs must be either 0 or 1
+                if (Math.Abs(i - curi) <= 1 && Math.Abs(j - curj) <= 1)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return false;
+        }
+    }
+}

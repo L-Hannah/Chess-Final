@@ -3,15 +3,32 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Mime;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson;
+using Newtonsoft.Json;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using Newtonsoft.Json.Linq;
 
 namespace WindowsFormsApp1
 {
     public partial class Form1 : Form
     {
+        Chess2 ChessGUI;
+        private static readonly HttpClient client = new HttpClient();
+        private string ServerURL = "http://77.102.118.179:80/users";
+        private string Authentication = "WzYsEiJrjHX.4L0fbv_PQmwthFqGnD,8U1o3p-9x2lBKc5aZuNyRgS6T7ICMeVdkAaOA";
+
         public Form1()
         {
             InitializeComponent();
@@ -55,6 +72,7 @@ namespace WindowsFormsApp1
             };
             TextBox username = new TextBox() //Text box for user input
             {
+                Name = "UsernameBox",
                 Location = new Point(103, 10), //On same line as label but a bit later
             };
             Controls.Add(usernameLabel); //Add both to controls
@@ -86,9 +104,11 @@ namespace WindowsFormsApp1
             RevealPassword.Click += PasswordReveal; //Attach the PasswordReveal function
             Button SubmitButton = new Button() //Button for submitting login information
             {
+                Name = "SubmitLogin",
                 Text = "Submit", //Set the text of the button
                 Location = new Point(15,70) //Below the password label
             };
+            SubmitButton.Click += SubmitButtonClick;
             Controls.Add(SubmitButton); //Add to controls
             Button ExitButton = new Button() //Button for exiting GUI
             {
@@ -132,6 +152,7 @@ namespace WindowsFormsApp1
             };
             TextBox username = new TextBox() //Text box for user input
             {
+                Name = "UsernameBox",
                 Location = new Point(105, 10), //On same line as label but a bit later
             };
             Label emailLabel = new Label()
@@ -143,6 +164,7 @@ namespace WindowsFormsApp1
             };
             TextBox email = new TextBox()
             {
+                Name = "EmailBox",
                 Location = new Point(105,40)
             };
             Label firstNameLabel = new Label()
@@ -154,6 +176,7 @@ namespace WindowsFormsApp1
             };
             TextBox firstName = new TextBox()
             {
+                Name = "FirstNameBox",
                 Location = new Point(105, 70)
             };
             Label lastNameLabel = new Label()
@@ -165,6 +188,7 @@ namespace WindowsFormsApp1
             };
             TextBox lastName = new TextBox()
             {
+                Name = "LastNameBox",
                 Location = new Point(105, 100)
             };
             Label passwordLabel = new Label()
@@ -202,17 +226,281 @@ namespace WindowsFormsApp1
             RevealPassword.Click += PasswordReveal; //Attach the PasswordReveal function
             Button SubmitButton = new Button() //Button for submitting login information
             {
+                Name = "SubmitSignup",
                 Text = "Submit", //Set the text of the button
                 Location = new Point(15, 160) //Below the password label
             };
+            SubmitButton.Click += SubmitButtonClick; //Add event handler for when button is clicked
             Controls.Add(SubmitButton); //Add to controls
             Button ExitButton = new Button() //Button for exiting GUI
             {
                 Text = "Exit", //Set text of button
                 Location = new Point(113, 160) //Same Y as submit but 98 pixels away
             };
-            ExitButton.Click += ExitGUI;
+            ExitButton.Click += ExitGUI; //Add event handler for when button is clicked
             Controls.Add(ExitButton);
+        }
+        private string ComputeSha256Hash(string rawData)
+        {
+            // Create a SHA256
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                // ComputeHash - returns byte array
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+
+                // Convert byte array to a string
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2"));
+                }
+                return builder.ToString();
+            }
+        }
+        private async void SubmitButtonClick(object sender, EventArgs e)
+        {
+            string Type = ""; //Set type to empty incase the code doesn't execute as intended.
+            if (sender is Button clickedButton) //Cast to button
+            {
+                string ButtonName = clickedButton.Name; //Get name
+                if (ButtonName == "SubmitSignup") //If sign up page
+                {
+                    Type = "Signup"; //Set type
+                }
+                else if (ButtonName == "SubmitLogin") //If login page
+                {
+                    Type = "Login"; //Set type
+                } else
+                {
+                    //This should not occur but error handling for if it does.
+                    MessageBox.Show("Somehow managed to get a value of " + ButtonName + " as the button name??");
+                }
+            }
+            if (Type == "Signup") //If sender was the signup page button
+            {
+                string Email = ((TextBox)Controls["EmailBox"]).Text.Trim();//Find box using name and get text attribute
+                string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
+                string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
+                string Firstname = ((TextBox)Controls["FirstNameBox"]).Text.Trim();//Find box using name and get text attribute
+                string Lastname = ((TextBox)Controls["LastNameBox"]).Text.Trim();//Find box using name and get text attribute
+                if (Email == "" || Username == "" || Password == "" || Firstname == "" | Lastname == "")
+                {
+                    MessageBox.Show("Boxes cannot be empty.");
+                }
+                else
+                {
+                    Validation ValidClass = new Validation(Email, Username, Password);
+                    if (!ValidClass.Valid)
+                    {
+                        MessageBox.Show(ValidClass.Reason);
+                    }
+                    else
+                    {
+                        //MessageBox.Show("Information valid.");
+                        //Test if user exists first or not
+                        string resultEntity = GetUser(Username);
+                        bool found=false;
+                        try
+                        {
+                            BsonDocument bsonDocument = BsonSerializer.Deserialize<BsonDocument>(resultEntity);
+                            found = true;
+                        }
+                        catch
+                        {
+                            //Don't need to show this as this is just for finding the user.
+                            //If the user doesn't exist, it is created here and so we don't need this shown
+                            //MessageBox.Show(resultEntity);
+                        }
+                        if (!found)
+                        {
+                            //If not found yet, see if email exists
+                            found = FindEmail(Email);
+                        }
+                        if (!found)
+                        {
+                            //Attempt to create account here
+                            string hashedPassword = ComputeSha256Hash(Password);
+                            var values = new Dictionary<string, string>
+                            {
+                            { "authorization", Authentication},
+                            { "firstname", Firstname},
+                            { "lastname", Lastname},
+                            { "username", Username},
+                            { "email", Email},
+                            { "password", hashedPassword}
+                            };
+                            string jsonContent = JsonConvert.SerializeObject(values);
+                            StringContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                            var response = await client.PostAsync(ServerURL, content);
+                            var responseString = await response.Content.ReadAsStringAsync();
+                            //MessageBox.Show(responseString);
+                            ShowChessGUI(Username);
+                        } else
+                        {
+                            MessageBox.Show("User with this username/email already exists.");
+                        }
+                    }
+                }
+            } else if (Type == "Login") //If sender was the login page button
+            {
+                //Login code
+                string Username = ((TextBox)Controls["UsernameBox"]).Text.Trim(); //Find box using name and get text attribute
+                string Password = ((TextBox)Controls["PasswordBox"]).Text.Trim(); //Find box using name and get text attribute
+                if (Username == "" || Password == "") 
+                {
+                    MessageBox.Show("Boxes cannot be blank");
+                    return;
+                }//Do not allow null values
+                string hashedPassword = ComputeSha256Hash(Password); //Hash password
+                bool found = false;
+                string resultEntity;
+                BsonDocument bsonDocument;
+                Dictionary<string, object> dict;
+                resultEntity = GetUser(Username);
+                try
+                {
+                    bsonDocument = BsonSerializer.Deserialize<BsonDocument>(resultEntity);
+                    found = true;
+                }
+                catch
+                {
+                    try
+                    {
+                        var bsonArray = BsonSerializer.Deserialize<BsonDocument[]>(resultEntity);
+                        //Shouldn't have an array here but if there is, do nothing
+                        //MessageBox.Show("Bson array parsed");
+                        return;
+                    }
+                    catch
+                    {
+                        MessageBox.Show(resultEntity);
+                    }
+                }
+                if (found)
+                {
+                    bsonDocument = BsonSerializer.Deserialize<BsonDocument>(resultEntity);
+                    dict = ToDictionary(bsonDocument);
+                    if (dict["password"].ToString()==hashedPassword)
+                    {
+                        MessageBox.Show("Password correct.");
+                        ShowChessGUI(Username);
+                    } else
+                    {
+                        MessageBox.Show("Password incorrect.");
+                    }
+                }
+            }
+        }
+        private string GetUser(string Username)
+        {
+            string resultEntity = "";
+            var values = new Dictionary<string, string>
+                        {
+                            { "authorization", Authentication},
+                        };
+            string jsonContent = JsonConvert.SerializeObject(values);
+            //Create URL to access specific user
+            string tempURL = ServerURL + "/" + Username;
+            var request = WebRequest.Create(tempURL);
+            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+            request.ContentType = "application/json";
+            request.Method = "GET";
+            request.Headers.Add("authorization", Authentication);
+            var type = request.GetType();
+            var currentMethod = type.GetProperty("CurrentMethod", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(request);
+
+            var methodType = currentMethod.GetType();
+            methodType.GetField("ContentBodyNotAllowed", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(currentMethod, false);
+
+            using (var streamWriter = new StreamWriter(request.GetRequestStream()))
+            {
+                streamWriter.Write(jsonContent);
+            }
+            try
+            {
+                var response = request.GetResponse();
+                var responseStream = response.GetResponseStream();
+                if (responseStream != null)
+                {
+                    var myStreamReader = new StreamReader(responseStream, Encoding.Default);
+                    resultEntity = myStreamReader.ReadToEnd();
+                }
+                responseStream.Close();
+                response.Close();
+                return resultEntity;
+            }
+            catch (WebException ex)
+            {
+                if (ex.Response is HttpWebResponse httpResponse)
+                {
+                    if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        return "User not found (404)";
+                    }
+                    else
+                    {
+                        return $"Other HTTP error: {httpResponse.StatusCode}";
+                    }
+                }
+                else
+                {
+                    return $"WebException: {ex.Message}";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Exception: {ex.Message}";
+            }
+        }
+        private bool FindEmail(string Email)
+        {
+            //Set string array using empty get
+            string resultEntity = GetUser("");
+            BsonDocument[] bsonArray;
+            try
+            {
+                //Will be an array if anything is returned as empty get request always returns BSON array
+                bsonArray = BsonSerializer.Deserialize<BsonDocument[]>(resultEntity);
+            }
+            catch
+            {
+                //Anything other than the array will be an error
+                MessageBox.Show(resultEntity);
+                return false;
+            }
+            foreach (BsonDocument bsonDoc in bsonArray)
+            {
+                if (bsonDoc is BsonDocument)
+                {
+                    BsonValue value2;
+                    if (bsonDoc.TryGetValue("email", out value2))
+                    {
+                        if (value2.ToString()==Email)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        private Dictionary<string, object> ToDictionary(BsonDocument document)
+        {
+            var dict = new Dictionary<string, object>();
+
+            foreach (var element in document)
+            {
+                dict[element.Name] = BsonTypeMapper.MapToDotNetValue(element.Value);
+            }
+
+            return dict;
+        }
+        private void ShowChessGUI (string username)
+        {
+            ChessGUI = new Chess2(username);
+            ChessGUI.Show();
+            Controls.Clear();
+            Hide();
         }
     }
 }
